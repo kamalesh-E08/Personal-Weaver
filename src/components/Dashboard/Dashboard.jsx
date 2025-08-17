@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [stats, setStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
@@ -109,6 +110,10 @@ const Dashboard = () => {
     navigate(path);
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   if (loading) {
     return (
       <div className="dashboard-loading">
@@ -120,8 +125,38 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      <Sidebar />
-      <div className="dashboard-content">
+      <Sidebar isCollapsed={isSidebarCollapsed} />
+      
+      {/* New rectangular section on top */}
+      <div className="dashboard-top-section">
+        <button 
+          className="sidebar-toggle-top"
+          onClick={toggleSidebar}
+        >
+          {isSidebarCollapsed ? '→' : '←'}
+        </button>
+        <div className="top-section-welcome">
+          <h2 className="welcome-text">{user?.name || 'User'}</h2>
+        </div>
+        <div className="top-section-actions">
+          <button 
+            className="btn btn-primary btn-top"
+            onClick={() => handleNavigation('/chat')}
+          >
+            <span className="btn-icon">💬</span>
+            AI Assistant
+          </button>
+          <button 
+            className="btn btn-outline btn-top"
+            onClick={() => handleNavigation('/planner')}
+          >
+            <span className="btn-icon">🧠</span>
+            Plan Maker
+          </button>
+        </div>
+      </div>
+      
+      <div className={`dashboard-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="dashboard-container">
           {/* Header */}
           <div className="dashboard-header">
@@ -134,20 +169,7 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="header-actions">
-              <button 
-                className="btn btn-primary"
-                onClick={() => handleNavigation('/chat')}
-              >
-                <span className="btn-icon">💬</span>
-                AI Assistant
-              </button>
-              <button 
-                className="btn btn-outline"
-                onClick={() => handleNavigation('/planner')}
-              >
-                <span className="btn-icon">🧠</span>
-                Plan Maker
-              </button>
+              {/* These buttons are now in the top section */}
             </div>
           </div>
 

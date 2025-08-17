@@ -179,23 +179,15 @@ const Tasks = () => {
           {/* Header */}
           <div className="tasks-header">
             <div className="header-content">
-              <h1 className="tasks-title gradient-text">Smart Tasks</h1>
-              <p className="tasks-subtitle">AI-powered task management and productivity tracking</p>
+              <h1 className="tasks-title gradient-text">Task Management</h1>
+              <p className="tasks-subtitle">Organize and track your AI-generated tasks</p>
             </div>
-            <button 
-              className="btn btn-primary"
-              onClick={generateAITasks}
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="loading-spinner"></span>
-              ) : (
-                <>
-                  <span className="btn-icon">✨</span>
-                  Generate AI Tasks
-                </>
-              )}
-            </button>
+            <div className="header-actions">
+              <button className="btn btn-primary">
+                <span className="btn-icon">+</span>
+                Generate Tasks
+              </button>
+            </div>
           </div>
 
           {/* Stats Cards */}
@@ -240,8 +232,8 @@ const Tasks = () => {
           {/* Filters and Controls */}
           <div className="controls-section">
             <div className="filters">
-              <select 
-                value={filter} 
+              <select
+                value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 className="select"
               >
@@ -251,8 +243,8 @@ const Tasks = () => {
                 <option value="ai-generated">AI Generated</option>
               </select>
 
-              <select 
-                value={sortBy} 
+              <select
+                value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="select"
               >
@@ -282,13 +274,13 @@ const Tasks = () => {
                         className="checkbox"
                       />
                     </div>
-                    
+
                     <div className="task-info">
                       <h3 className={`task-title ${task.completed ? 'completed' : ''}`}>
                         {task.title}
                       </h3>
                       <p className="task-description">{task.description}</p>
-                      
+
                       <div className="task-meta">
                         <div className="meta-item">
                           <span className="meta-icon">📅</span>
@@ -301,7 +293,7 @@ const Tasks = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="task-badges">
                     {task.aiGenerated && (
                       <span className="badge badge-info">
@@ -327,12 +319,12 @@ const Tasks = () => {
               <div className="empty-icon">✅</div>
               <h3 className="empty-title">No tasks found</h3>
               <p className="empty-description">
-                {filter === 'all' 
+                {filter === 'all'
                   ? "You don't have any tasks yet. Let AI generate some for you!"
                   : `No tasks match the current filter: ${filter}`
                 }
               </p>
-              <button 
+              <button
                 className="btn btn-primary"
                 onClick={generateAITasks}
               >

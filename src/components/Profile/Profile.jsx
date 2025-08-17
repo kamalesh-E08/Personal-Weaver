@@ -107,12 +107,8 @@ const Profile = () => {
           {/* Header */}
           <div className="profile-header">
             <div className="header-content">
-              <h1 className="profile-title gradient-text">
-                Profile & Settings
-              </h1>
-              <p className="profile-subtitle">
-                Manage your account and customize your experience
-              </p>
+              <h1 className="profile-title gradient-text">Profile & Settings</h1>
+              <p className="profile-subtitle">Manage your account and personalize your experience</p>
             </div>
           </div>
 
@@ -134,9 +130,8 @@ const Profile = () => {
                 Preferences
               </button>
               <button
-                className={`tab ${
-                  activeTab === "achievements" ? "active" : ""
-                }`}
+                className={`tab ${activeTab === "achievements" ? "active" : ""
+                  }`}
                 onClick={() => setActiveTab("achievements")}
               >
                 <span className="tab-icon">🏆</span>
@@ -608,9 +603,8 @@ const Profile = () => {
                   {achievements.map((achievement) => (
                     <div
                       key={achievement.id}
-                      className={`achievement-item ${
-                        achievement.earned ? "earned" : "locked"
-                      }`}
+                      className={`achievement-item ${achievement.earned ? "earned" : "locked"
+                        }`}
                     >
                       <div className="achievement-icon">{achievement.icon}</div>
                       <div className="achievement-content">

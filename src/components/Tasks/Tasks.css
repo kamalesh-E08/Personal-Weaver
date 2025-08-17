@@ -7,13 +7,19 @@
 .tasks-content {
   flex: 1;
   margin-left: 280px;
+  display: flex;
+  flex-direction: column;
   transition: margin-left 0.3s ease;
 }
 
 .tasks-container {
-  padding: 32px;
-  max-width: 1400px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
+  padding: 32px;
 }
 
 .tasks-header {
@@ -216,23 +222,23 @@
   .tasks-content {
     margin-left: 0;
   }
-  
+
   .tasks-container {
     padding: 24px 16px;
   }
-  
+
   .tasks-header {
     flex-direction: column;
     gap: 16px;
   }
-  
-  .controls-section {
-    flex-direction: column;
-    align-items: stretch;
+
+  .tasks-grid {
+    grid-template-columns: 1fr;
   }
-  
-  .filters {
-    justify-content: center;
+
+  .filters-section {
+    flex-direction: column;
+    gap: 12px;
   }
 }
 
@@ -240,31 +246,27 @@
   .tasks-container {
     padding: 16px;
   }
-  
-  .header-content h1 {
+
+  .tasks-header h1 {
     font-size: 28px;
   }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .task-content {
+
+  .task-item {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
-  
+
   .task-badges {
     flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
+    justify-content: flex-start;
   }
-  
-  .filters {
+
+  .filters-section {
     flex-direction: column;
+    gap: 8px;
   }
-  
-  .filters .select {
-    min-width: auto;
+
+  .filter-group {
+    width: 100%;
   }
 }
