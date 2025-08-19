@@ -72,10 +72,12 @@ const Chat = () => {
     }, 100);
   };
 
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   return (
     <div className="chat-page">
-      <Sidebar />
-      <div className="chat-content">
+      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={setIsSidebarCollapsed} />
+      <div className={`chat-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="chat-container">
           {/* Header */}
           <div className="chat-header">

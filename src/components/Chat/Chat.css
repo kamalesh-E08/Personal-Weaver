@@ -6,17 +6,23 @@
 
 .chat-content {
   flex: 1;
-  margin-left: 280px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  transition: margin-left 0.3s ease;
+  transition: padding-left 0.3s ease;
+  /* Leave space for the fixed sidebar, but center content within remaining area */
+  padding-left: 280px;
+}
+
+.chat-content.sidebar-collapsed {
+  padding-left: 80px;
 }
 
 .chat-container {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 1200px;
+  max-width: 900px;
   margin: 0 auto;
   width: 100%;
   padding: 32px;
@@ -341,10 +347,11 @@
 /* Mobile Responsive */
 @media (max-width: 1024px) {
   .chat-content {
-    margin-left: 0;
+    padding-left: 0;
   }
   
   .chat-container {
+    max-width: 100%;
     padding: 24px 16px;
   }
 }
