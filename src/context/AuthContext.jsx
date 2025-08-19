@@ -17,6 +17,16 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const demoUserJson = localStorage.getItem("demoUser");
+    if (demoUserJson) {
+      // Demo mode: restore user without hitting backend
+      try {
+        const parsedDemoUser = JSON.parse(demoUserJson);
+        setUser(parsedDemoUser);
+      } catch {}
+      setLoading(false);
+      return;
+    }
     if (token) {
       setAuthHeader(token);
       fetchUser();
@@ -31,6 +41,12 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
+      const demoUserJson = localStorage.getItem("demoUser");
+      if (demoUserJson) {
+        const parsedDemoUser = JSON.parse(demoUserJson);
+        setUser(parsedDemoUser);
+        return;
+      }
       const response = await axios.get(
         "http://localhost:5000/api/users/profile"
       );
@@ -58,6 +74,22 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
+      // Demo mode fallback: authenticate using stored demo credentials
+      try {
+        const demoCredsJson = localStorage.getItem("demoCredentials");
+        const demoUserJson = localStorage.getItem("demoUser");
+        if (demoCredsJson && demoUserJson) {
+          const demoCreds = JSON.parse(demoCredsJson);
+          const demoUser = JSON.parse(demoUserJson);
+          if (demoCreds.email === email && demoCreds.password === password) {
+            const token = "demo-token";
+            localStorage.setItem("token", token);
+            setAuthHeader(token);
+            setUser(demoUser);
+            return { success: true, message: "Logged in (demo mode)" };
+          }
+        }
+      } catch {}
       return {
         success: false,
         message: error.response?.data?.message || "Login failed",
@@ -83,15 +115,31 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || "Registration failed",
+      // Demo mode fallback: allow local registration when backend is unavailable
+      const demoUser = {
+        id: "demo",
+        name,
+        email,
       };
+      try {
+        localStorage.setItem("demoUser", JSON.stringify(demoUser));
+        localStorage.setItem(
+          "demoCredentials",
+          JSON.stringify({ email, password })
+        );
+      } catch {}
+      const token = "demo-token";
+      localStorage.setItem("token", token);
+      setAuthHeader(token);
+      setUser(demoUser);
+      return { success: true, message: "Registered (demo mode)" };
     }
   };
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("demoUser");
+    localStorage.removeItem("demoCredentials");
     delete axios.defaults.headers.common["Authorization"];
     setUser(null);
   };

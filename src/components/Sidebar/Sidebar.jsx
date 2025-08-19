@@ -3,8 +3,16 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import './Sidebar.css';
 import { useAuth } from '../../context/AuthContext';
 
-const Sidebar = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar = ({ isCollapsed: controlledCollapsed, onToggle }) => {
+  const [localCollapsed, setLocalCollapsed] = useState(false);
+  const isCollapsed = typeof controlledCollapsed === 'boolean' ? controlledCollapsed : localCollapsed;
+  const handleToggle = () => {
+    if (typeof onToggle === 'function') {
+      onToggle(!isCollapsed);
+    } else {
+      setLocalCollapsed(!isCollapsed);
+    }
+  };
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -38,7 +46,7 @@ const Sidebar = () => {
         </div>
         <button 
           className="sidebar-toggle"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={handleToggle}
         >
           {isCollapsed ? '→' : '←'}
         </button>

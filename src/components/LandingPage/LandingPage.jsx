@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './LandingPage.css';
-import { useAuth } from '../../../src/context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const LandingPage = () => {
   const [isLogin, setIsLogin] = useState(true);

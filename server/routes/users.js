@@ -8,7 +8,7 @@ const router = express.Router();
 // Get user profile
 router.get("/profile", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.userId).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -24,7 +24,7 @@ router.put("/profile", auth, async (req, res) => {
   try {
     const { name, email, bio, preferences } = req.body;
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -46,7 +46,7 @@ router.put("/profile", auth, async (req, res) => {
     await user.save();
 
     // Return user without password
-    const updatedUser = await User.findById(req.user.id).select("-password");
+    const updatedUser = await User.findById(req.userId).select("-password");
     res.json(updatedUser);
   } catch (error) {
     console.error("Error updating user profile:", error);
@@ -65,7 +65,7 @@ router.put("/change-password", auth, async (req, res) => {
         .json({ message: "Current password and new password are required" });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -92,12 +92,12 @@ router.put("/change-password", auth, async (req, res) => {
 // Delete user account
 router.delete("/account", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    await User.findByIdAndDelete(req.user.id);
+    await User.findByIdAndDelete(req.userId);
     res.json({ message: "Account deleted successfully" });
   } catch (error) {
     console.error("Error deleting account:", error);
@@ -114,10 +114,10 @@ router.get("/stats", auth, async (req, res) => {
 
     const [totalTasks, completedTasks, totalPlans, totalChats] =
       await Promise.all([
-        Task.countDocuments({ userId: req.user.id }),
-        Task.countDocuments({ userId: req.user.id, completed: true }),
-        Plan.countDocuments({ userId: req.user.id }),
-        ChatHistory.countDocuments({ userId: req.user.id }),
+        Task.countDocuments({ userId: req.userId }),
+        Task.countDocuments({ userId: req.userId, completed: true }),
+        Plan.countDocuments({ userId: req.userId }),
+        ChatHistory.countDocuments({ userId: req.userId }),
       ]);
 
     const stats = {

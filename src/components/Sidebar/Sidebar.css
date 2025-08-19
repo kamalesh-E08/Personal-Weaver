@@ -160,10 +160,21 @@
   justify-content: center;
   font-weight: 600;
   color: white;
+  transition: width 0.3s ease, height 0.3s ease, font-size 0.3s ease;
 }
 
 .avatar-text {
   font-size: 16px;
+}
+
+/* Shrink user avatar when the sidebar is collapsed */
+.sidebar.collapsed .user-avatar {
+  width: 28px;
+  height: 28px;
+}
+
+.sidebar.collapsed .avatar-text {
+  font-size: 12px;
 }
 
 .user-info {

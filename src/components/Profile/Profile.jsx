@@ -99,10 +99,12 @@ const Profile = () => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   return (
     <div className="profile-page">
-      <Sidebar />
-      <div className="profile-content">
+      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={setIsSidebarCollapsed} />
+      <div className={`profile-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="profile-container">
           {/* Header */}
           <div className="profile-header">
