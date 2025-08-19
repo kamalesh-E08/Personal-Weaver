@@ -133,10 +133,10 @@ const Dashboard = () => {
           className="sidebar-toggle-top"
           onClick={toggleSidebar}
         >
-          {isSidebarCollapsed ? '→' : '←'}
+          ☰
         </button>
         <div className="top-section-welcome">
-          <h2 className="welcome-text">{user?.name || 'User'}</h2>
+          <h2 className="welcome-text"></h2>
         </div>
         <div className="top-section-actions">
           <button 

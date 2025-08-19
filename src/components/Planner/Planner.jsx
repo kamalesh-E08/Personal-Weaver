@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import axios from "axios";
+import api from "../../utils/api";
 import "./Planner.css";
 import Sidebar from "../Sidebar/Sidebar";
 
@@ -23,7 +23,7 @@ const Planner = () => {
 
   const fetchPlans = async () => {
     try {
-      const response = await axios.get("/plans");
+      const response = await api.get("/plans");
       setPlans(response.data);
     } catch (error) {
       console.error("Error fetching plans:", error);
@@ -35,7 +35,7 @@ const Planner = () => {
   const handleCreatePlan = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("/plans", newPlan);
+      const response = await api.post("/plans", newPlan);
       setPlans([response.data, ...plans]);
       setNewPlan({
         title: "",
@@ -52,7 +52,7 @@ const Planner = () => {
 
   const handleDeletePlan = async (planId) => {
     try {
-      await axios.delete(`/plans/${planId}`);
+      await api.delete(`/plans/${planId}`);
       setPlans(plans.filter((plan) => plan._id !== planId));
     } catch (error) {
       console.error("Error deleting plan:", error);
