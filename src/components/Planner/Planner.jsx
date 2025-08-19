@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../../context/AuthContext";
-import axios from "axios"; // <-- Replace api import with axios directly
+import axios from "axios";
 import "./Planner.css";
 
 const Planner = () => {
-  const { user } = useAuth();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -23,9 +21,21 @@ const Planner = () => {
   const fetchPlans = async () => {
     try {
       const response = await axios.get("/plans");
-      setPlans(response.data);
+      console.log("API response:", response.data);
+
+      // Ensure plans is always an array
+      let data = response.data;
+      if (!Array.isArray(data)) {
+        if (Array.isArray(data.plans)) {
+          data = data.plans;
+        } else {
+          data = [];
+        }
+      }
+      setPlans(data);
     } catch (error) {
       console.error("Error fetching plans:", error);
+      setPlans([]);
     } finally {
       setLoading(false);
     }
@@ -35,7 +45,7 @@ const Planner = () => {
     e.preventDefault();
     try {
       const response = await axios.post("/plans", newPlan);
-      setPlans([response.data, ...plans]);
+      setPlans((prev) => [response.data, ...prev]);
       setNewPlan({
         title: "",
         description: "",
@@ -52,7 +62,7 @@ const Planner = () => {
   const handleDeletePlan = async (planId) => {
     try {
       await axios.delete(`/plans/${planId}`);
-      setPlans(plans.filter((plan) => plan._id !== planId));
+      setPlans((prev) => prev.filter((plan) => plan._id !== planId));
     } catch (error) {
       console.error("Error deleting plan:", error);
     }
@@ -246,7 +256,7 @@ const Planner = () => {
               <div className="plan-goals">
                 <h4>Goals:</h4>
                 <ul>
-                  {plan.goals.map((goal, index) => (
+                  {plan.goals?.map((goal, index) => (
                     <li key={index}>{goal}</li>
                   ))}
                 </ul>
@@ -255,12 +265,15 @@ const Planner = () => {
               <div className="plan-meta">
                 <span className="timeline">Timeline: {plan.timeline}</span>
                 <span className={`priority priority-${plan.priority}`}>
-                  {plan.priority.toUpperCase()}
+                  {plan.priority?.toUpperCase()}
                 </span>
               </div>
 
               <div className="plan-date">
-                Created: {new Date(plan.createdAt).toLocaleDateString()}
+                Created:{" "}
+                {plan.createdAt
+                  ? new Date(plan.createdAt).toLocaleDateString()
+                  : "Unknown"}
               </div>
             </div>
           ))

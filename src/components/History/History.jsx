@@ -7,70 +7,39 @@ const History = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [dateRange, setDateRange] = useState("all");
+  const [loading, setLoading] = useState(true); // loader state
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchHistory();
   }, []);
 
   const fetchHistory = async () => {
-    // Mock data for demonstration
-    const mockHistory = [
-      {
-        id: 1,
-        type: "chat",
-        title: "Productivity Tips Discussion",
-        description:
-          "Asked for advice on improving daily productivity and time management",
-        timestamp: "2024-01-15T10:30:00Z",
-        duration: "15 minutes",
-        category: "Productivity",
-        status: "completed",
-      },
-      {
-        id: 2,
-        type: "plan",
-        title: "Q4 Marketing Strategy Plan",
-        description:
-          "Generated comprehensive marketing plan for fourth quarter goals",
-        timestamp: "2024-01-14T14:20:00Z",
-        duration: "8 minutes",
-        category: "Business",
-        status: "active",
-      },
-      {
-        id: 3,
-        type: "tasks",
-        title: "Weekly Task Generation",
-        description:
-          "AI generated 12 tasks for project management and personal goals",
-        timestamp: "2024-01-14T09:15:00Z",
-        duration: "3 minutes",
-        category: "Tasks",
-        status: "completed",
-      },
-      {
-        id: 4,
-        type: "chat",
-        title: "Learning Path Consultation",
-        description: "Discussed React.js learning roadmap and best practices",
-        timestamp: "2024-01-13T16:45:00Z",
-        duration: "22 minutes",
-        category: "Learning",
-        status: "completed",
-      },
-      {
-        id: 5,
-        type: "plan",
-        title: "Personal Fitness Journey",
-        description: "Created 3-month fitness and wellness transformation plan",
-        timestamp: "2024-01-12T11:30:00Z",
-        duration: "12 minutes",
-        category: "Health",
-        status: "active",
-      },
-    ];
+    try {
+      setLoading(true);
+      setError(null);
 
-    setHistoryItems(mockHistory);
+      const res = await fetch("/history", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          // You can add token here if auth is required:
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      setHistoryItems(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error fetching history:", err);
+      setError("Failed to fetch history. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getTypeIcon = (type) => {
@@ -112,12 +81,13 @@ const History = () => {
 
   const filteredItems = historyItems.filter((item) => {
     const matchesSearch =
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase());
+      item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesType = filterType === "all" || item.type === filterType;
 
     let matchesDate = true;
-    if (dateRange !== "all") {
+    if (dateRange !== "all" && item.timestamp) {
       const itemDate = new Date(item.timestamp);
       const now = new Date();
       const daysDiff = Math.floor(
@@ -160,9 +130,9 @@ const History = () => {
                 Track your AI interactions and productivity journey
               </p>
             </div>
-            <button className="btn btn-outline">
+            <button className="btn btn-outline" onClick={fetchHistory}>
               <span className="btn-icon">📥</span>
-              Export History
+              Refresh
             </button>
           </div>
 
@@ -241,59 +211,83 @@ const History = () => {
             </select>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="empty-state card">
+              <div className="empty-icon">⏳</div>
+              <h3 className="empty-title">Loading history...</h3>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="empty-state card">
+              <div className="empty-icon">⚠️</div>
+              <h3 className="empty-title">Error</h3>
+              <p className="empty-description">{error}</p>
+            </div>
+          )}
+
           {/* History List */}
-          <div className="history-list">
-            {filteredItems.map((item) => (
-              <div key={item.id} className="history-item card">
-                <div className="item-content">
-                  <div className="item-icon">{getTypeIcon(item.type)}</div>
+          {!loading && !error && filteredItems.length > 0 && (
+            <div className="history-list">
+              {filteredItems.map((item) => (
+                <div key={item._id} className="history-item card">
+                  <div className="item-content">
+                    <div className="item-icon">{getTypeIcon(item.type)}</div>
 
-                  <div className="item-details">
-                    <div className="item-header">
-                      <h3 className="item-title">{item.title}</h3>
-                      <div className="item-badges">
-                        <span className={`badge ${getTypeColor(item.type)}`}>
-                          {item.type.charAt(0).toUpperCase() +
-                            item.type.slice(1)}
-                        </span>
+                    <div className="item-details">
+                      <div className="item-header">
+                        <h3 className="item-title">{item.title}</h3>
+                        <div className="item-badges">
+                          <span className={`badge ${getTypeColor(item.type)}`}>
+                            {item.type?.charAt(0).toUpperCase() +
+                              item.type?.slice(1)}
+                          </span>
+                          <span
+                            className={`badge ${getStatusColor(item.status)}`}
+                          >
+                            {item.status?.charAt(0).toUpperCase() +
+                              item.status?.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="item-description">{item.description}</p>
+
+                      <div className="item-meta">
+                        <div className="meta-item">
+                          <span className="meta-icon">📅</span>
+                          <span>
+                            {item.timestamp
+                              ? new Date(item.timestamp).toLocaleDateString()
+                              : "N/A"}
+                          </span>
+                        </div>
+                        <div className="meta-item">
+                          <span className="meta-icon">⏱️</span>
+                          <span>{item.duration || "—"}</span>
+                        </div>
                         <span
-                          className={`badge ${getStatusColor(item.status)}`}
+                          className={`badge ${getTypeColor(item.category)}`}
                         >
-                          {item.status.charAt(0).toUpperCase() +
-                            item.status.slice(1)}
+                          {item.category || "General"}
                         </span>
                       </div>
                     </div>
 
-                    <p className="item-description">{item.description}</p>
-
-                    <div className="item-meta">
-                      <div className="meta-item">
-                        <span className="meta-icon">📅</span>
-                        <span>
-                          {new Date(item.timestamp).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="meta-item">
-                        <span className="meta-icon">⏱️</span>
-                        <span>{item.duration}</span>
-                      </div>
-                      <span className={`badge ${getTypeColor(item.category)}`}>
-                        {item.category}
-                      </span>
-                    </div>
+                    <button className="btn btn-outline btn-sm">
+                      <span className="btn-icon">👁️</span>
+                      View
+                    </button>
                   </div>
-
-                  <button className="btn btn-outline btn-sm">
-                    <span className="btn-icon">👁️</span>
-                    View
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
-          {filteredItems.length === 0 && (
+          {/* Empty State */}
+          {!loading && !error && filteredItems.length === 0 && (
             <div className="empty-state card">
               <div className="empty-icon">📜</div>
               <h3 className="empty-title">No history found</h3>
