@@ -7,6 +7,7 @@ const Tasks = () => {
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('priority');
   const [loading, setLoading] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -173,8 +174,8 @@ const Tasks = () => {
 
   return (
     <div className="tasks-page">
-      <Sidebar />
-      <div className="tasks-content">
+      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={setIsSidebarCollapsed} />
+      <div className={`tasks-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="tasks-container">
           {/* Header */}
           <div className="tasks-header">

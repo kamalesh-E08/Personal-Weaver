@@ -1,3 +1,20 @@
+.planner-page {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+}
+
+.planner-content {
+  flex: 1;
+  min-width: 0;
+  transition: padding-left 0.3s ease;
+  padding-left: 280px;
+}
+
+.planner-content.sidebar-collapsed {
+  padding-left: 80px;
+}
+
 .planner-container {
   padding: 20px;
   max-width: 1200px;
@@ -312,6 +329,9 @@
 }
 
 @media (max-width: 768px) {
+  .planner-content {
+    padding-left: 0;
+  }
   .planner-container {
     padding: 15px;
   }

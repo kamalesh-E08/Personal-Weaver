@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [recentTasks, setRecentTasks] = useState([]);
   const [recentPlans, setRecentPlans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -120,8 +121,8 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      <Sidebar />
-      <div className="dashboard-content">
+      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={setIsSidebarCollapsed} />
+      <div className={`dashboard-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="dashboard-container">
           {/* Header */}
           <div className="dashboard-header">

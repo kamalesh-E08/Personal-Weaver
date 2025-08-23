@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
+import axios from "axios"; // <-- Replace api import with axios directly
 import "./Planner.css";
 
 const Planner = () => {
+  const { user } = useAuth();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -18,24 +20,14 @@ const Planner = () => {
     fetchPlans();
   }, []);
 
+  const API_BASE = "http://localhost:5000/api";
+
   const fetchPlans = async () => {
     try {
       const response = await axios.get("/plans");
-      console.log("API response:", response.data);
-
-      // Ensure plans is always an array
-      let data = response.data;
-      if (!Array.isArray(data)) {
-        if (Array.isArray(data.plans)) {
-          data = data.plans;
-        } else {
-          data = [];
-        }
-      }
-      setPlans(data);
+      setPlans(response.data);
     } catch (error) {
       console.error("Error fetching plans:", error);
-      setPlans([]);
     } finally {
       setLoading(false);
     }
@@ -45,7 +37,7 @@ const Planner = () => {
     e.preventDefault();
     try {
       const response = await axios.post("/plans", newPlan);
-      setPlans((prev) => [response.data, ...prev]);
+      setPlans([response.data, ...plans]);
       setNewPlan({
         title: "",
         description: "",
@@ -56,15 +48,25 @@ const Planner = () => {
       setShowCreateForm(false);
     } catch (error) {
       console.error("Error creating plan:", error);
+      // Fallback: append locally
+      const local = {
+        _id: Date.now().toString(),
+        ...newPlan,
+        createdAt: new Date().toISOString(),
+      };
+      setPlans([local, ...plans]);
+      setShowCreateForm(false);
     }
   };
 
   const handleDeletePlan = async (planId) => {
     try {
       await axios.delete(`/plans/${planId}`);
-      setPlans((prev) => prev.filter((plan) => plan._id !== planId));
+      setPlans(plans.filter((plan) => plan._id !== planId));
     } catch (error) {
       console.error("Error deleting plan:", error);
+      // Fallback: remove locally
+      setPlans(plans.filter((plan) => plan._id !== planId));
     }
   };
 
@@ -94,14 +96,22 @@ const Planner = () => {
 
   if (loading) {
     return (
-      <div className="planner-container">
-        <div className="loading">Loading plans...</div>
+      <div className="planner-page">
+        <Sidebar isCollapsed={isSidebarCollapsed} onToggle={setIsSidebarCollapsed} />
+        <div className={`planner-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+          <div className="planner-container">
+            <div className="loading">Loading plans...</div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="planner-container">
+    <div className="planner-page">
+      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={setIsSidebarCollapsed} />
+      <div className={`planner-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <div className="planner-container">
       <div className="planner-header">
         <h1>AI Planner</h1>
         <p>Create and manage your strategic plans with AI assistance</p>
@@ -278,6 +288,8 @@ const Planner = () => {
             </div>
           ))
         )}
+      </div>
+        </div>
       </div>
     </div>
   );

@@ -9,6 +9,15 @@
   box-sizing: border-box;
 }
 
+html, body, #root, .App {
+  height: 100%;
+}
+
+/* Ensure root spans full width with no default padding/margins */
+#root {
+  width: 100%;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',

@@ -117,10 +117,12 @@ const History = () => {
     tasksGenerated: historyItems.filter((item) => item.type === "tasks").length,
   };
 
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   return (
     <div className="history-page">
-      <Sidebar />
-      <div className="history-content">
+      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={setIsSidebarCollapsed} />
+      <div className={`history-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="history-container">
           {/* Header */}
           <div className="history-header">
