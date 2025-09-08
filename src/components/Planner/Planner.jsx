@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import axios from "axios"; // <-- Replace api import with axios directly
+import axios from "axios";
 import "./Planner.css";
+import Sidebar from "../Sidebar/Sidebar";
 
 const Planner = () => {
   const { user } = useAuth();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [newPlan, setNewPlan] = useState({
     title: "",
     description: "",
@@ -244,7 +246,7 @@ const Planner = () => {
             <p>Create your first strategic plan to get started!</p>
           </div>
         ) : (
-          plans.map((plan) => (
+          Array.isArray(plans) && plans.map((plan) => (
             <div
               key={plan._id}
               className={`plan-card priority-${plan.priority}`}

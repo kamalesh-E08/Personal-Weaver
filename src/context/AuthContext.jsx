@@ -23,7 +23,9 @@ export const AuthProvider = ({ children }) => {
       try {
         const parsedDemoUser = JSON.parse(demoUserJson);
         setUser(parsedDemoUser);
-      } catch {}
+      } catch {
+        // No-op for demo mode fallback
+      }
       setLoading(false);
       return;
     }
@@ -89,7 +91,10 @@ export const AuthProvider = ({ children }) => {
             return { success: true, message: "Logged in (demo mode)" };
           }
         }
-      } catch {}
+      } catch {
+        // Intentionally left empty for demo mode fallback
+        return;
+      }
       return {
         success: false,
         message: error.response?.data?.message || "Login failed",
@@ -115,6 +120,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
+      console.error("Error registering user:", error);
       // Demo mode fallback: allow local registration when backend is unavailable
       const demoUser = {
         id: "demo",
@@ -127,7 +133,9 @@ export const AuthProvider = ({ children }) => {
           "demoCredentials",
           JSON.stringify({ email, password })
         );
-      } catch {}
+      } catch {
+        // Intentionally left empty for demo mode fallback
+      }
       const token = "demo-token";
       localStorage.setItem("token", token);
       setAuthHeader(token);

@@ -1,109 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import './Tasks.css';
-import Sidebar from '../Sidebar/Sidebar';
+import React, { useState, useEffect, useCallback } from "react";
+import "./Tasks.css";
+import Sidebar from "../Sidebar/Sidebar";
+import { useAuth } from "../../context/AuthContext";
 
 const Tasks = () => {
   const [tasks, setTasks] = useState([]);
-  const [filter, setFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('priority');
+  const [filter, setFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("priority");
   const [loading, setLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const { user } = useAuth();
+
+  const fetchTasks = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const queryParams = new URLSearchParams();
+      if (filter !== "all") {
+        queryParams.append("filter", filter);
+      }
+      if (sortBy !== "none") {
+        queryParams.append("sortBy", sortBy);
+      }
+
+      const response = await fetch(`/api/tasks?${queryParams.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch tasks");
+      }
+      const data = await response.json();
+      setTasks(data);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [filter, sortBy]);
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    if (user) {
+      fetchTasks();
+    }
+  }, [user, fetchTasks]);
 
-  const fetchTasks = async () => {
-    setLoading(true);
-    // Mock data for demonstration
-    const mockTasks = [
-      {
-        _id: '1',
-        title: 'Review quarterly financial reports',
-        description: 'Analyze Q3 performance and prepare insights for stakeholders',
-        completed: false,
-        priority: 'high',
-        category: 'Business',
-        dueDate: '2024-01-15',
-        estimatedTime: '2 hours',
-        aiGenerated: true
-      },
-      {
-        _id: '2',
-        title: 'Schedule team standup meetings',
-        description: 'Coordinate with team members for weekly standup schedule',
-        completed: true,
-        priority: 'medium',
-        category: 'Work',
-        dueDate: '2024-01-12',
-        estimatedTime: '30 minutes',
-        aiGenerated: true
-      },
-      {
-        _id: '3',
-        title: 'Update project documentation',
-        description: 'Document recent changes and update API specifications',
-        completed: false,
-        priority: 'high',
-        category: 'Development',
-        dueDate: '2024-01-16',
-        estimatedTime: '3 hours',
-        aiGenerated: true
-      },
-      {
-        _id: '4',
-        title: 'Prepare presentation for client meeting',
-        description: 'Create slides for upcoming client presentation on project progress',
-        completed: false,
-        priority: 'medium',
-        category: 'Business',
-        dueDate: '2024-01-18',
-        estimatedTime: '1.5 hours',
-        aiGenerated: false
-      },
-      {
-        _id: '5',
-        title: 'Complete React course module 5',
-        description: 'Finish advanced hooks and context API lessons',
-        completed: true,
-        priority: 'low',
-        category: 'Learning',
-        dueDate: '2024-01-10',
-        estimatedTime: '2 hours',
-        aiGenerated: true
-      },
-      {
-        _id: '6',
-        title: 'Plan weekend workout routine',
-        description: 'Design a balanced workout plan for Saturday and Sunday',
-        completed: false,
-        priority: 'low',
-        category: 'Health',
-        dueDate: '2024-01-14',
-        estimatedTime: '45 minutes',
-        aiGenerated: true
-      }
-    ];
-
-    setTimeout(() => {
-      setTasks(mockTasks);
-      setLoading(false);
-    }, 500);
-  };
-
-  const filteredTasks = tasks.filter(task => {
-    if (filter === 'completed') return task.completed;
-    if (filter === 'pending') return !task.completed;
-    if (filter === 'ai-generated') return task.aiGenerated;
+  const filteredTasks = tasks.filter((task) => {
+    if (filter === "completed") return task.completed;
+    if (filter === "pending") return !task.completed;
+    if (filter === "ai-generated") return task.aiGenerated;
     return true;
   });
 
   const sortedTasks = [...filteredTasks].sort((a, b) => {
-    if (sortBy === 'priority') {
+    if (sortBy === "priority") {
       const priorityOrder = { high: 3, medium: 2, low: 1 };
       return priorityOrder[b.priority] - priorityOrder[a.priority];
-    }
-    if (sortBy === 'dueDate') {
+    } else if (sortBy === "dueDate") {
       return new Date(a.dueDate) - new Date(b.dueDate);
     }
     return 0;
@@ -111,79 +65,112 @@ const Tasks = () => {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return 'badge-danger';
-      case 'medium': return 'badge-warning';
-      case 'low': return 'badge-success';
-      default: return 'badge-primary';
+      case "high":
+        return "badge-danger";
+      case "medium":
+        return "badge-warning";
+      case "low":
+        return "badge-success";
+      default:
+        return "badge-primary";
     }
   };
 
   const getPriorityIcon = (priority) => {
     switch (priority) {
-      case 'high': return '🔴';
-      case 'medium': return '🟡';
-      case 'low': return '🟢';
-      default: return '⚪';
+      case "high":
+        return "🔴";
+      case "medium":
+        return "🟡";
+      case "low":
+        return "🟢";
+      default:
+        return "⚪";
     }
   };
 
-  const toggleTaskCompletion = (taskId) => {
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
+  const toggleTaskCompletion = async (taskId) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
         task._id === taskId ? { ...task, completed: !task.completed } : task
       )
     );
+    try {
+      const token = localStorage.getItem("token");
+      const taskToUpdate = tasks.find((task) => task._id === taskId);
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ completed: !taskToUpdate.completed }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update task completion");
+      }
+      // If the update was successful, refetch tasks to ensure state is synchronized with backend
+      fetchTasks();
+    } catch (error) {
+      console.error("Error toggling task completion:", error);
+      // Revert local state if API call fails
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task._id === taskId ? { ...task, completed: !task.completed } : task
+        )
+      );
+    }
   };
 
   const generateAITasks = async () => {
     setLoading(true);
-    // Simulate AI task generation
-    setTimeout(() => {
-      const newTasks = [
-        {
-          _id: Date.now().toString(),
-          title: 'Organize digital workspace',
-          description: 'Clean up desktop files and organize project folders',
-          completed: false,
-          priority: 'medium',
-          category: 'Productivity',
-          dueDate: '2024-01-20',
-          estimatedTime: '1 hour',
-          aiGenerated: true
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/tasks/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        {
-          _id: (Date.now() + 1).toString(),
-          title: 'Research industry trends',
-          description: 'Stay updated with latest developments in your field',
-          completed: false,
-          priority: 'low',
-          category: 'Learning',
-          dueDate: '2024-01-22',
-          estimatedTime: '45 minutes',
-          aiGenerated: true
-        }
-      ];
-      setTasks(prevTasks => [...prevTasks, ...newTasks]);
+        body: JSON.stringify({ count: 2 }), // Generate 2 tasks as an example
+      });
+      if (!response.ok) {
+        throw new Error("Failed to generate AI tasks");
+      }
+      const newTasks = await response.json();
+      setTasks((prevTasks) => [...prevTasks, ...newTasks]);
+    } catch (error) {
+      console.error("Error generating AI tasks:", error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
-  const completedCount = tasks.filter(task => task.completed).length;
-  const pendingCount = tasks.filter(task => !task.completed).length;
-  const aiGeneratedCount = tasks.filter(task => task.aiGenerated).length;
+  const completedCount = tasks.filter((task) => task.completed).length;
+  const pendingCount = tasks.filter((task) => !task.completed).length;
+  const aiGeneratedCount = tasks.filter((task) => task.aiGenerated).length;
 
   return (
     <div className="tasks-page">
-      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={setIsSidebarCollapsed} />
-      <div className={`tasks-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <Sidebar
+        isCollapsed={isSidebarCollapsed}
+        onToggle={setIsSidebarCollapsed}
+      />
+      <div
+        className={`tasks-content ${
+          isSidebarCollapsed ? "sidebar-collapsed" : ""
+        }`}
+      >
         <div className="tasks-container">
           {/* Header */}
           <div className="tasks-header">
             <div className="header-content">
               <h1 className="tasks-title gradient-text">Smart Tasks</h1>
-              <p className="tasks-subtitle">AI-powered task management and productivity tracking</p>
+              <p className="tasks-subtitle">
+                AI-powered task management and productivity tracking
+              </p>
             </div>
-            <button 
+            <button
               className="btn btn-primary"
               onClick={generateAITasks}
               disabled={loading}
@@ -216,7 +203,10 @@ const Tasks = () => {
                 <span className="stat-icon">✅</span>
               </div>
               <div className="stat-value">{completedCount}</div>
-              <div className="stat-change">{Math.round((completedCount / Math.max(tasks.length, 1)) * 100)}% completion rate</div>
+              <div className="stat-change">
+                {Math.round((completedCount / Math.max(tasks.length, 1)) * 100)}
+                % completion rate
+              </div>
             </div>
 
             <div className="stat-card card">
@@ -241,8 +231,8 @@ const Tasks = () => {
           {/* Filters and Controls */}
           <div className="controls-section">
             <div className="filters">
-              <select 
-                value={filter} 
+              <select
+                value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 className="select"
               >
@@ -252,8 +242,8 @@ const Tasks = () => {
                 <option value="ai-generated">AI Generated</option>
               </select>
 
-              <select 
-                value={sortBy} 
+              <select
+                value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="select"
               >
@@ -283,17 +273,23 @@ const Tasks = () => {
                         className="checkbox"
                       />
                     </div>
-                    
+
                     <div className="task-info">
-                      <h3 className={`task-title ${task.completed ? 'completed' : ''}`}>
+                      <h3
+                        className={`task-title ${
+                          task.completed ? "completed" : ""
+                        }`}
+                      >
                         {task.title}
                       </h3>
                       <p className="task-description">{task.description}</p>
-                      
+
                       <div className="task-meta">
                         <div className="meta-item">
                           <span className="meta-icon">📅</span>
-                          <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                          <span>
+                            Due: {new Date(task.dueDate).toLocaleDateString()}
+                          </span>
                         </div>
                         <div className="meta-item">
                           <span className="meta-icon">⏱️</span>
@@ -302,7 +298,7 @@ const Tasks = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="task-badges">
                     {task.aiGenerated && (
                       <span className="badge badge-info">
@@ -310,13 +306,15 @@ const Tasks = () => {
                         AI
                       </span>
                     )}
-                    <span className={`badge ${getPriorityColor(task.priority)}`}>
-                      <span className="badge-icon">{getPriorityIcon(task.priority)}</span>
+                    <span
+                      className={`badge ${getPriorityColor(task.priority)}`}
+                    >
+                      <span className="badge-icon">
+                        {getPriorityIcon(task.priority)}
+                      </span>
                       {task.priority}
                     </span>
-                    <span className="badge badge-primary">
-                      {task.category}
-                    </span>
+                    <span className="badge badge-primary">{task.category}</span>
                   </div>
                 </div>
               </div>
@@ -328,15 +326,11 @@ const Tasks = () => {
               <div className="empty-icon">✅</div>
               <h3 className="empty-title">No tasks found</h3>
               <p className="empty-description">
-                {filter === 'all' 
+                {filter === "all"
                   ? "You don't have any tasks yet. Let AI generate some for you!"
-                  : `No tasks match the current filter: ${filter}`
-                }
+                  : `No tasks match the current filter: ${filter}`}
               </p>
-              <button 
-                className="btn btn-primary"
-                onClick={generateAITasks}
-              >
+              <button className="btn btn-primary" onClick={generateAITasks}>
                 <span className="btn-icon">✨</span>
                 Generate AI Tasks
               </button>
