@@ -32,32 +32,6 @@ AI Integration: LLM-powered personalized suggestions
 
 Other Tools: ESLint, JWT for authentication, REST APIs
 
-📂 Project Structure
-Personal-Weaver-main/
-│── client/ (src folder contains React components)
-│   ├── components/
-│   │   ├── Chat/
-│   │   ├── Dashboard/
-│   │   ├── Planner/
-│   │   ├── Profile/
-│   │   ├── Sidebar/
-│   │   └── LandingPage/
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── index.css
-│
-│── server/ (Node.js + Express backend)
-│   ├── routes/        # API routes (auth, tasks, plans, users, chat)
-│   ├── models/        # MongoDB models (User, Task, Plan, ChatHistory)
-│   ├── middleware/    # Authentication middleware
-│   ├── server.js      # Entry point for backend
-│   └── .env           # Environment variables
-│
-│── package.json       # Dependencies (root & server)
-│── vite.config.js     # Frontend config
-│── .gitignore
-│── README.md
-
 ⚙️ Installation & Setup
 1. Clone the repository
 git clone https://github.com/your-username/PersonaWeaver.git
