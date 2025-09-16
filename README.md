@@ -34,7 +34,7 @@ Other Tools: ESLint, JWT for authentication, REST APIs
 
 ⚙️ Installation & Setup
 1. Clone the repository
-git clone https://github.com/your-username/PersonaWeaver.git
+git clone https://github.com/your-username/Personal-Weaver.git
 cd PersonaWeaver
 
 2. Install dependencies
