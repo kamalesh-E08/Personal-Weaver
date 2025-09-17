@@ -6,10 +6,7 @@
 
 .planner-content {
   flex: 1;
-  margin-left: 280px;
-  display: flex;
-  flex-direction: column;
-  transition: margin-left 0.3s ease;
+
 }
 
 .planner-container {
@@ -336,12 +333,7 @@
   font-size: 1.1rem;
 }
 
-/* Mobile Responsive */
-@media (max-width: 1024px) {
-  .planner-content {
-    margin-left: 0;
-  }
-  
+
   .planner-container {
     padding: 24px 16px;
   }

@@ -11,13 +11,13 @@ const chatRoutes = require('./routes/chat');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGODB_URI, {
+
   useNewUrlParser: true,
   useUnifiedTopology: true,
 }).then(() => {

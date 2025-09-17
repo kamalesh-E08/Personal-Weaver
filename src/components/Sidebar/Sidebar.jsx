@@ -3,8 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import './Sidebar.css';
 import { useAuth } from '../../context/AuthContext';
 
-const Sidebar = ({ isCollapsed = false }) => {
-  const [showUserMenu, setShowUserMenu] = useState(false);
+
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -56,6 +55,7 @@ const Sidebar = ({ isCollapsed = false }) => {
             <span className="brand-text gradient-text-primary">Personal Weaver</span>
           )}
         </div>
+
       </div>
 
       <nav className="sidebar-nav">

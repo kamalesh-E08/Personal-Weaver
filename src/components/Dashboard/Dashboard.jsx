@@ -17,6 +17,7 @@ const Dashboard = () => {
   const [recentTasks, setRecentTasks] = useState([]);
   const [recentPlans, setRecentPlans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -125,37 +126,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      <Sidebar isCollapsed={isSidebarCollapsed} />
-      
-      {/* New rectangular section on top */}
-      <div className="dashboard-top-section">
-        <button 
-          className="sidebar-toggle-top"
-          onClick={toggleSidebar}
-        >
-          ☰
-        </button>
-        <div className="top-section-welcome">
-          <h2 className="welcome-text"></h2>
-        </div>
-        <div className="top-section-actions">
-          <button 
-            className="btn btn-primary btn-top"
-            onClick={() => handleNavigation('/chat')}
-          >
-            <span className="btn-icon">💬</span>
-            AI Assistant
-          </button>
-          <button 
-            className="btn btn-outline btn-top"
-            onClick={() => handleNavigation('/planner')}
-          >
-            <span className="btn-icon">🧠</span>
-            Plan Maker
-          </button>
-        </div>
-      </div>
-      
+
       <div className={`dashboard-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="dashboard-container">
           {/* Header */}
