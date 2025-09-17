@@ -354,6 +354,16 @@
     max-width: 100%;
     padding: 24px 16px;
   }
+  
+  .chat-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .quick-prompts {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -365,20 +375,20 @@
     font-size: 28px;
   }
   
-  .quick-prompts {
-    grid-template-columns: 1fr;
-  }
-  
-  .message {
-    max-width: 90%;
-  }
-  
-  .chat-form {
+  .chat-input-container {
     flex-direction: column;
+    gap: 12px;
+  }
+  
+  .chat-input {
+    width: 100%;
   }
   
   .send-btn {
-    align-self: flex-end;
-    width: auto;
+    width: 100%;
+  }
+  
+  .quick-prompts {
+    grid-template-columns: 1fr;
   }
 }

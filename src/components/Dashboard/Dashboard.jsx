@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [stats, setStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
@@ -110,6 +111,10 @@ const Dashboard = () => {
     navigate(path);
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   if (loading) {
     return (
       <div className="dashboard-loading">
@@ -121,7 +126,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={setIsSidebarCollapsed} />
+
       <div className={`dashboard-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="dashboard-container">
           {/* Header */}
@@ -135,20 +140,7 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="header-actions">
-              <button 
-                className="btn btn-primary"
-                onClick={() => handleNavigation('/chat')}
-              >
-                <span className="btn-icon">💬</span>
-                AI Assistant
-              </button>
-              <button 
-                className="btn btn-outline"
-                onClick={() => handleNavigation('/planner')}
-              >
-                <span className="btn-icon">🧠</span>
-                Plan Maker
-              </button>
+              {/* These buttons are now in the top section */}
             </div>
           </div>
 

@@ -158,14 +158,8 @@ const History = () => {
           <div className="history-header">
             <div className="header-content">
               <h1 className="history-title gradient-text">Activity History</h1>
-              <p className="history-subtitle">
-                Track your AI interactions and productivity journey
-              </p>
+              <p className="history-subtitle">Track your AI interactions and productivity journey</p>
             </div>
-            <button className="btn btn-outline">
-              <span className="btn-icon">📥</span>
-              Export History
-            </button>
           </div>
 
           {/* Stats Cards */}
