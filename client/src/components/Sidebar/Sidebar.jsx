@@ -1,19 +1,32 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import './Sidebar.css';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import "./Sidebar.css";
+import { useAuth } from "../../context/AuthContext";
 
-
+const Sidebar = ({ isCollapsed: controlledCollapsed, onToggle }) => {
+  const [localCollapsed, setLocalCollapsed] = useState(false);
+  const isCollapsed =
+    typeof controlledCollapsed === "boolean"
+      ? controlledCollapsed
+      : localCollapsed;
+  const handleToggle = () => {
+    if (typeof onToggle === "function") {
+      onToggle(!isCollapsed);
+    } else {
+      setLocalCollapsed(!isCollapsed);
+    }
+  };
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   const menuItems = [
-    { path: '/dashboard', icon: '📊', label: 'Dashboard' },
-    { path: '/chat', icon: '💬', label: 'AI Assistant' },
-    { path: '/planner', icon: '🧠', label: 'Plan Maker' },
-    { path: '/tasks', icon: '✅', label: 'Tasks' },
-    { path: '/history', icon: '📜', label: 'History' },
+    { path: "/dashboard", icon: "📊", label: "Dashboard" },
+    { path: "/chat", icon: "💬", label: "AI Assistant" },
+    { path: "/planner", icon: "🧠", label: "Plan Maker" },
+    { path: "/tasks", icon: "✅", label: "Tasks" },
+    { path: "/history", icon: "📜", label: "History" },
+    { path: "/profile", icon: "👤", label: "Profile" },
   ];
 
   const handleNavigation = (path) => {
@@ -22,40 +35,23 @@ import { useAuth } from '../../context/AuthContext';
 
   const handleLogout = () => {
     logout();
-    navigate('/');
-  };
-
-  const handleUserMenuClick = () => {
-    setShowUserMenu(!showUserMenu);
-  };
-
-  const handleMenuOption = (option) => {
-    setShowUserMenu(false);
-    switch (option) {
-      case 'settings':
-        navigate('/profile');
-        break;
-      case 'profile':
-        navigate('/profile');
-        break;
-      case 'logout':
-        handleLogout();
-        break;
-      default:
-        break;
-    }
+    navigate("/");
   };
 
   return (
-    <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+    <div className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-brand">
           <span className="brand-icon">🧠</span>
           {!isCollapsed && (
-            <span className="brand-text gradient-text-primary">Personal Weaver</span>
+            <span className="brand-text gradient-text-primary">
+              Personal Weaver
+            </span>
           )}
         </div>
-
+        <button className="sidebar-toggle" onClick={handleToggle}>
+          {isCollapsed ? "→" : "←"}
+        </button>
       </div>
 
       <nav className="sidebar-nav">
@@ -65,11 +61,15 @@ import { useAuth } from '../../context/AuthContext';
             {menuItems.map((item) => (
               <li key={item.path} className="nav-item">
                 <button
-                  className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
+                  className={`nav-link ${
+                    location.pathname === item.path ? "active" : ""
+                  }`}
                   onClick={() => handleNavigation(item.path)}
                 >
                   <span className="nav-icon">{item.icon}</span>
-                  {!isCollapsed && <span className="nav-text">{item.label}</span>}
+                  {!isCollapsed && (
+                    <span className="nav-text">{item.label}</span>
+                  )}
                 </button>
               </li>
             ))}
@@ -78,47 +78,25 @@ import { useAuth } from '../../context/AuthContext';
       </nav>
 
       <div className="sidebar-footer">
-        <div className="user-menu-container">
-          <button className="user-menu-btn" onClick={handleUserMenuClick}>
-            <div className="user-avatar-small">
-              <span className="avatar-text-small">
-                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-              </span>
-            </div>
-            {!isCollapsed && (
-              <div className="user-info-small">
-                <div className="user-name-small">{user?.name || 'User'}</div>
+        <div className="user-profile">
+          <div className="user-avatar">
+            <span className="avatar-text">
+              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+            </span>
+          </div>
+          {!isCollapsed && (
+            <div className="user-info">
+              <div className="user-name">{user?.name || "User"}</div>
+              <div className="user-email">
+                {user?.email || "user@example.com"}
               </div>
-            )}
-            <span className="menu-arrow">▼</span>
-          </button>
-
-          {showUserMenu && (
-            <div className="user-dropup-menu">
-              <button
-                className="menu-option"
-                onClick={() => handleMenuOption('settings')}
-              >
-                <span className="menu-icon">⚙️</span>
-                <span>Settings</span>
-              </button>
-              <button
-                className="menu-option"
-                onClick={() => handleMenuOption('profile')}
-              >
-                <span className="menu-icon">👤</span>
-                <span>Profile</span>
-              </button>
-              <button
-                className="menu-option logout-option"
-                onClick={() => handleMenuOption('logout')}
-              >
-                <span className="menu-icon">🚪</span>
-                <span>Logout</span>
-              </button>
             </div>
           )}
         </div>
+        <button className="logout-btn" onClick={handleLogout}>
+          <span className="logout-icon">🚪</span>
+          {!isCollapsed && <span>Logout</span>}
+        </button>
       </div>
     </div>
   );

@@ -165,7 +165,6 @@ const Tasks = () => {
           {/* Header */}
           <div className="tasks-header">
             <div className="header-content">
-<<<<<<< HEAD:src/components/Tasks/Tasks.jsx
               <h1 className="tasks-title gradient-text">Task Management</h1>
               <p className="tasks-subtitle">Organize and track your AI-generated tasks</p>
             </div>
@@ -175,27 +174,6 @@ const Tasks = () => {
                 Generate Tasks
               </button>
             </div>
-=======
-              <h1 className="tasks-title gradient-text">Smart Tasks</h1>
-              <p className="tasks-subtitle">
-                AI-powered task management and productivity tracking
-              </p>
-            </div>
-            <button
-              className="btn btn-primary"
-              onClick={generateAITasks}
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="loading-spinner"></span>
-              ) : (
-                <>
-                  <span className="btn-icon">✨</span>
-                  Generate AI Tasks
-                </>
-              )}
-            </button>
->>>>>>> kamalesh:client/src/components/Tasks/Tasks.jsx
           </div>
 
           {/* Stats Cards */}
@@ -338,22 +316,14 @@ const Tasks = () => {
               <div className="empty-icon">✅</div>
               <h3 className="empty-title">No tasks found</h3>
               <p className="empty-description">
-<<<<<<< HEAD:src/components/Tasks/Tasks.jsx
                 {filter === 'all'
-=======
-                {filter === "all"
->>>>>>> kamalesh:client/src/components/Tasks/Tasks.jsx
                   ? "You don't have any tasks yet. Let AI generate some for you!"
                   : `No tasks match the current filter: ${filter}`}
               </p>
-<<<<<<< HEAD:src/components/Tasks/Tasks.jsx
               <button
                 className="btn btn-primary"
                 onClick={generateAITasks}
               >
-=======
-              <button className="btn btn-primary" onClick={generateAITasks}>
->>>>>>> kamalesh:client/src/components/Tasks/Tasks.jsx
                 <span className="btn-icon">✨</span>
                 Generate AI Tasks
               </button>
