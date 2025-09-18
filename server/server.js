@@ -12,20 +12,12 @@ dotenv.config();
 
 const app = express();
 
+const PORT = process.env.PORT || 5000;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log('Connected to MongoDB successfully');
-}).catch((err) => {
-  console.error('MongoDB connection error:', err);
-  process.exit(1);
-});
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
