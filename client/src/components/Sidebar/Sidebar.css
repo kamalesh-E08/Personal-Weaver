@@ -1,8 +1,8 @@
 .sidebar {
   position: fixed;
   left: 0;
-  top: 60px;
-  height: calc(100vh - 60px);
+  top: 0;
+  height: 100vh;
   width: 280px;
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(20px);
@@ -268,8 +268,8 @@
 /* Mobile Responsive */
 @media (max-width: 1024px) {
   .sidebar {
-    top: 60px;
-    height: calc(100vh - 60px);
+    top: 0;
+    height: 100vh;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
   }
@@ -281,8 +281,8 @@
 
 @media (max-width: 768px) {
   .sidebar {
-    top: 50px;
-    height: calc(100vh - 50px);
+    top: 0;
+    height: 100vh;
     width: 100%;
     max-width: 280px;
   }

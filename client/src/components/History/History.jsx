@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./History.css";
-import Sidebar from "../Sidebar/Sidebar";
+import Layout from "../Layout/Layout";
 
 const History = () => {
   const [historyItems, setHistoryItems] = useState([]);
@@ -117,18 +117,15 @@ const History = () => {
     tasksGenerated: historyItems.filter((item) => item.type === "tasks").length,
   };
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
-    <div className="history-page">
-      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={setIsSidebarCollapsed} />
-      <div className={`history-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <Layout>
       <div className="history-container">
         {/* Header */}
         <div className="history-header">
           <div className="header-content">
             <h1 className="history-title gradient-text">Activity History</h1>
-              <p className="history-subtitle">Track your AI interactions and productivity journey</p>
+            <p className="history-subtitle">Track your AI interactions and productivity journey</p>
           </div>
 
           <button className="btn btn-outline" onClick={fetchHistory}>
@@ -269,9 +266,9 @@ const History = () => {
                         <span className="meta-icon">⏱️</span>
                         <span>{item.duration || "—"}</span>
                       </div>
-                        <span
-                          className={`badge ${getTypeColor(item.category)}`}
-                        >
+                      <span
+                        className={`badge ${getTypeColor(item.category)}`}
+                      >
                         {item.category || "General"}
                       </span>
                     </div>
@@ -300,8 +297,7 @@ const History = () => {
           </div>
         )}
       </div>
-    </div>
-    </div>
+    </Layout>
   );
 };
 
