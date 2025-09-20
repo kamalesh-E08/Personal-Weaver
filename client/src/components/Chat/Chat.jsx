@@ -48,14 +48,14 @@ const Chat = () => {
         "I can help you create a structured plan for this. Let's start by identifying your main objectives.",
         "Here are some personalized suggestions based on your goals and current progress.",
         "I understand what you're looking for. Let me provide you with some strategic recommendations.",
-        "That's an excellent goal! I can help you create a step-by-step plan to achieve it effectively."
+        "That's an excellent goal! I can help you create a step-by-step plan to achieve it effectively.",
       ];
 
       const aiMessage = {
         id: Date.now() + 1,
-        role: 'assistant',
+        role: "assistant",
         content: aiResponses[Math.floor(Math.random() * aiResponses.length)],
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -83,7 +83,9 @@ const Chat = () => {
           <div className="chat-header">
             <div className="header-content">
               <h1 className="chat-title gradient-text">AI Assistant</h1>
-              <p className="chat-subtitle">Your intelligent personal assistant powered by AI</p>
+              <p className="chat-subtitle">
+                Your intelligent personal assistant powered by AI
+              </p>
             </div>
             <div className="status-badge">
               <div className="status-indicator"></div>
@@ -98,10 +100,10 @@ const Chat = () => {
                 <div className="welcome-icon">🧠</div>
                 <h3 className="welcome-title">Welcome to Personal Weaver AI</h3>
                 <p className="welcome-description">
-                  I'm here to help you with planning, task management, productivity tips, and more. 
-                  How can I assist you today?
+                  I'm here to help you with planning, task management,
+                  productivity tips, and more. How can I assist you today?
                 </p>
-                
+
                 <div className="quick-prompts">
                   {quickPrompts.map((prompt, index) => (
                     <button
@@ -120,12 +122,14 @@ const Chat = () => {
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`message ${message.role === 'user' ? 'user-message' : 'ai-message'}`}
+                    className={`message ${
+                      message.role === "user" ? "user-message" : "ai-message"
+                    }`}
                   >
                     <div className="message-avatar">
-                      {message.role === 'user' ? (
+                      {message.role === "user" ? (
                         <span className="user-avatar">
-                          {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                          {user?.name?.charAt(0)?.toUpperCase() || "U"}
                         </span>
                       ) : (
                         <span className="ai-avatar">🤖</span>
@@ -141,7 +145,7 @@ const Chat = () => {
                     </div>
                   </div>
                 ))}
-                
+
                 {isLoading && (
                   <div className="message ai-message">
                     <div className="message-avatar">
@@ -175,8 +179,8 @@ const Chat = () => {
                 className="chat-input"
                 disabled={isLoading}
               />
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="send-btn"
                 disabled={isLoading || !input.trim()}
               >
@@ -184,7 +188,8 @@ const Chat = () => {
               </button>
             </form>
             <p className="chat-disclaimer">
-              Personal Weaver AI can make mistakes. Consider checking important information.
+              Personal Weaver AI can make mistakes. Consider checking important
+              information.
             </p>
           </div>
         </div>

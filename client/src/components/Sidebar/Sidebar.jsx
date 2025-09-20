@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 import { useAuth } from "../../context/AuthContext";
@@ -11,7 +11,7 @@ const Sidebar = ({ isCollapsed: controlledCollapsed, onToggle }) => {
       : localCollapsed;
   const handleToggle = () => {
     if (typeof onToggle === "function") {
-      onToggle(!isCollapsed);
+    onToggle(!isCollapsed);
     } else {
       setLocalCollapsed(!isCollapsed);
     }

@@ -60,7 +60,7 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="App">
-          <AppRoutes />
+            <AppRoutes />
         </div>
       </Router>
     </AuthProvider>
@@ -68,4 +68,3 @@ function App() {
 }
 
 export default App;
-
