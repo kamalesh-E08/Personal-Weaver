@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import "./Dashboard.css";
-import Sidebar from "../Sidebar/Sidebar";
+import Layout from "../Layout/Layout";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [stats, setStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
@@ -88,19 +87,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="dashboard">
-      <div
-        className={`dashboard-content ${
-          isSidebarCollapsed ? "sidebar-collapsed" : ""
-        }`}
-      >
-        {/* Sidebar */}
-        <Sidebar
-          isCollapsed={isSidebarCollapsed}
-          onToggle={setIsSidebarCollapsed}
-        />
-
-        {/* Main Content */}
+    <Layout>
       <div className="dashboard-container">
         {/* Header */}
         <div className="dashboard-header">
@@ -145,10 +132,9 @@ const Dashboard = () => {
                 <div
                   className="progress-fill"
                   style={{
-                    width: `${
-                      (stats.completedTasks / Math.max(stats.totalTasks, 1)) *
+                    width: `${(stats.completedTasks / Math.max(stats.totalTasks, 1)) *
                       100
-                    }%`,
+                      }%`,
                   }}
                 ></div>
               </div>
@@ -212,14 +198,13 @@ const Dashboard = () => {
                     <input
                       type="checkbox"
                       checked={task.completed}
-                      onChange={() => {}}
+                      onChange={() => { }}
                     />
                   </div>
                   <div className="task-content">
                     <h4
-                      className={`task-title ${
-                        task.completed ? "completed" : ""
-                      }`}
+                      className={`task-title ${task.completed ? "completed" : ""
+                        }`}
                     >
                       {task.title}
                     </h4>
@@ -274,11 +259,10 @@ const Dashboard = () => {
                   <div className="plan-header">
                     <h4 className="plan-title">{plan.title}</h4>
                     <span
-                      className={`badge ${
-                        plan.status === "completed"
+                      className={`badge ${plan.status === "completed"
                           ? "badge-success"
                           : "badge-primary"
-                      }`}
+                        }`}
                     >
                       {plan.status}
                     </span>
@@ -344,8 +328,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </div>
-    </div>
+    </Layout>
   );
 };
 
