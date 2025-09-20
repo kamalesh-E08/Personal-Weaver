@@ -1,21 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 import { useAuth } from "../../context/AuthContext";
 
-const Sidebar = ({ isCollapsed: controlledCollapsed, onToggle }) => {
+const Sidebar = ({ isCollapsed: controlledCollapsed }) => {
   const [localCollapsed, setLocalCollapsed] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
   const isCollapsed =
     typeof controlledCollapsed === "boolean"
       ? controlledCollapsed
       : localCollapsed;
-  const handleToggle = () => {
-    if (typeof onToggle === "function") {
-    onToggle(!isCollapsed);
-    } else {
-      setLocalCollapsed(!isCollapsed);
-    }
-  };
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -33,9 +28,47 @@ const Sidebar = ({ isCollapsed: controlledCollapsed, onToggle }) => {
     navigate(path);
   };
 
+  // Handle clicks outside the user menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
+
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleUserMenuClick = () => {
+    setShowUserMenu(!showUserMenu);
+  };
+
+  const handleMenuOptionClick = (option) => {
+    setShowUserMenu(false);
+    switch (option) {
+      case 'settings':
+        navigate("/profile");
+        break;
+      case 'profile':
+        navigate("/profile");
+        break;
+      case 'logout':
+        handleLogout();
+        break;
+      default:
+        break;
+    }
   };
 
   return (
@@ -49,9 +82,6 @@ const Sidebar = ({ isCollapsed: controlledCollapsed, onToggle }) => {
             </span>
           )}
         </div>
-        <button className="sidebar-toggle" onClick={handleToggle}>
-          {isCollapsed ? "→" : "←"}
-        </button>
       </div>
 
       <nav className="sidebar-nav">
@@ -61,9 +91,8 @@ const Sidebar = ({ isCollapsed: controlledCollapsed, onToggle }) => {
             {menuItems.map((item) => (
               <li key={item.path} className="nav-item">
                 <button
-                  className={`nav-link ${
-                    location.pathname === item.path ? "active" : ""
-                  }`}
+                  className={`nav-link ${location.pathname === item.path ? "active" : ""
+                    }`}
                   onClick={() => handleNavigation(item.path)}
                 >
                   <span className="nav-icon">{item.icon}</span>
@@ -78,25 +107,47 @@ const Sidebar = ({ isCollapsed: controlledCollapsed, onToggle }) => {
       </nav>
 
       <div className="sidebar-footer">
-        <div className="user-profile">
-          <div className="user-avatar">
-            <span className="avatar-text">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
-            </span>
-          </div>
-          {!isCollapsed && (
-            <div className="user-info">
-              <div className="user-name">{user?.name || "User"}</div>
-              <div className="user-email">
-                {user?.email || "user@example.com"}
+        <div className="user-menu-container" ref={userMenuRef}>
+          <button className="user-menu-btn" onClick={handleUserMenuClick}>
+            <div className="user-avatar-small">
+              <span className="avatar-text-small">
+                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              </span>
+            </div>
+            {!isCollapsed && (
+              <div className="user-info-small">
+                <div className="user-name-small">{user?.name || "User"}</div>
               </div>
+            )}
+            <span className="menu-arrow">▼</span>
+          </button>
+
+          {showUserMenu && (
+            <div className="user-dropup-menu">
+              <button
+                className="menu-option"
+                onClick={() => handleMenuOptionClick('settings')}
+              >
+                <span className="menu-icon">⚙️</span>
+                Settings
+              </button>
+              <button
+                className="menu-option"
+                onClick={() => handleMenuOptionClick('profile')}
+              >
+                <span className="menu-icon">👤</span>
+                Profile
+              </button>
+              <button
+                className="menu-option logout-option"
+                onClick={() => handleMenuOptionClick('logout')}
+              >
+                <span className="menu-icon">🚪</span>
+                Logout
+              </button>
             </div>
           )}
         </div>
-        <button className="logout-btn" onClick={handleLogout}>
-          <span className="logout-icon">🚪</span>
-          {!isCollapsed && <span>Logout</span>}
-        </button>
       </div>
     </div>
   );

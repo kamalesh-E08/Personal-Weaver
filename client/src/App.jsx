@@ -14,6 +14,7 @@ import Tasks from "./components/Tasks/Tasks";
 import History from "./components/History/History";
 import Profile from "./components/Profile/Profile";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { SidebarProvider } from "./context/SidebarContext";
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -58,11 +59,13 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="App">
+      <SidebarProvider>
+        <Router>
+          <div className="App">
             <AppRoutes />
-        </div>
-      </Router>
+          </div>
+        </Router>
+      </SidebarProvider>
     </AuthProvider>
   );
 }

@@ -2,14 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import "./Planner.css";
-import Sidebar from "../Sidebar/Sidebar";
+import Layout from "../Layout/Layout";
 
 const Planner = () => {
   const { user } = useAuth();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [newPlan, setNewPlan] = useState({
     title: "",
     description: "",
@@ -98,35 +97,16 @@ const Planner = () => {
 
   if (loading) {
     return (
-      <div className="planner-page">
-        <Sidebar
-          isCollapsed={isSidebarCollapsed}
-          onToggle={setIsSidebarCollapsed}
-        />
-        <div
-          className={`planner-content ${
-            isSidebarCollapsed ? "sidebar-collapsed" : ""
-          }`}
-        >
+      <Layout>
         <div className="planner-container">
           <div className="loading">Loading plans...</div>
         </div>
-      </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="planner-page">
-      <Sidebar
-        isCollapsed={isSidebarCollapsed}
-        onToggle={setIsSidebarCollapsed}
-      />
-      <div
-        className={`planner-content ${
-          isSidebarCollapsed ? "sidebar-collapsed" : ""
-        }`}
-      >
+    <Layout>
       <div className="planner-container">
         <div className="planner-header">
           <h1>AI Planner</h1>
@@ -307,8 +287,7 @@ const Planner = () => {
           )}
         </div>
       </div>
-    </div>
-    </div>
+    </Layout>
   );
 };
 

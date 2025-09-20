@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./Profile.css";
-import Sidebar from "../Sidebar/Sidebar";
+import Layout from "../Layout/Layout";
 import { useAuth } from "../../context/AuthContext";
 
 const Profile = () => {
@@ -99,18 +99,15 @@ const Profile = () => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
-    <div className="profile-page">
-      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={setIsSidebarCollapsed} />
-      <div className={`profile-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <Layout>
       <div className="profile-container">
         {/* Header */}
         <div className="profile-header">
           <div className="header-content">
             <h1 className="profile-title gradient-text">Profile & Settings</h1>
-              <p className="profile-subtitle">Manage your account and personalize your experience</p>
+            <p className="profile-subtitle">Manage your account and personalize your experience</p>
           </div>
         </div>
 
@@ -132,8 +129,8 @@ const Profile = () => {
               Preferences
             </button>
             <button
-                className={`tab ${activeTab === "achievements" ? "active" : ""
-                  }`}
+              className={`tab ${activeTab === "achievements" ? "active" : ""
+                }`}
               onClick={() => setActiveTab("achievements")}
             >
               <span className="tab-icon">🏆</span>
@@ -310,9 +307,9 @@ const Profile = () => {
                       disabled={!isEditing}
                       className="select"
                     >
-                        <option value="America/Los_Angeles">
-                          Pacific Time
-                        </option>
+                      <option value="America/Los_Angeles">
+                        Pacific Time
+                      </option>
                       <option value="America/Denver">Mountain Time</option>
                       <option value="America/Chicago">Central Time</option>
                       <option value="America/New_York">Eastern Time</option>
@@ -402,9 +399,9 @@ const Profile = () => {
 
                   <div className="preference-item">
                     <div className="preference-info">
-                        <div className="preference-label">
-                          Push Notifications
-                        </div>
+                      <div className="preference-label">
+                        Push Notifications
+                      </div>
                       <div className="preference-description">
                         Get real-time notifications in your browser
                       </div>
@@ -605,14 +602,14 @@ const Profile = () => {
                 {achievements.map((achievement) => (
                   <div
                     key={achievement.id}
-                      className={`achievement-item ${achievement.earned ? "earned" : "locked"
-                    }`}
+                    className={`achievement-item ${achievement.earned ? "earned" : "locked"
+                      }`}
                   >
                     <div className="achievement-icon">{achievement.icon}</div>
                     <div className="achievement-content">
-                        <h4 className="achievement-title">
-                          {achievement.title}
-                        </h4>
+                      <h4 className="achievement-title">
+                        {achievement.title}
+                      </h4>
                       <p className="achievement-description">
                         {achievement.description}
                       </p>
@@ -627,8 +624,7 @@ const Profile = () => {
           </div>
         )}
       </div>
-    </div>
-    </div>
+    </Layout>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./Tasks.css";
-import Sidebar from "../Sidebar/Sidebar";
+import Layout from "../Layout/Layout";
 import { useAuth } from "../../context/AuthContext";
 
 const Tasks = () => {
@@ -8,7 +8,6 @@ const Tasks = () => {
   const [filter, setFilter] = useState("all");
   const [sortBy, setSortBy] = useState("priority");
   const [loading, setLoading] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { user } = useAuth();
 
   const fetchTasks = useCallback(async () => {
@@ -151,22 +150,13 @@ const Tasks = () => {
   const aiGeneratedCount = tasks.filter((task) => task.aiGenerated).length;
 
   return (
-    <div className="tasks-page">
-      <Sidebar
-        isCollapsed={isSidebarCollapsed}
-        onToggle={setIsSidebarCollapsed}
-      />
-      <div
-        className={`tasks-content ${
-          isSidebarCollapsed ? "sidebar-collapsed" : ""
-        }`}
-      >
+    <Layout>
       <div className="tasks-container">
         {/* Header */}
         <div className="tasks-header">
           <div className="header-content">
             <h1 className="tasks-title gradient-text">Task Management</h1>
-              <p className="tasks-subtitle">Organize and track your AI-generated tasks</p>
+            <p className="tasks-subtitle">Organize and track your AI-generated tasks</p>
           </div>
           <div className="header-actions">
             <button className="btn btn-primary">
@@ -194,8 +184,8 @@ const Tasks = () => {
             </div>
             <div className="stat-value">{completedCount}</div>
             <div className="stat-change">
-                {Math.round((completedCount / Math.max(tasks.length, 1)) * 100)}
-                % completion rate
+              {Math.round((completedCount / Math.max(tasks.length, 1)) * 100)}
+              % completion rate
             </div>
           </div>
 
@@ -266,9 +256,8 @@ const Tasks = () => {
 
                   <div className="task-info">
                     <h3
-                      className={`task-title ${
-                        task.completed ? "completed" : ""
-                      }`}
+                      className={`task-title ${task.completed ? "completed" : ""
+                        }`}
                     >
                       {task.title}
                     </h3>
@@ -296,9 +285,9 @@ const Tasks = () => {
                       AI
                     </span>
                   )}
-                    <span
-                      className={`badge ${getPriorityColor(task.priority)}`}
-                    >
+                  <span
+                    className={`badge ${getPriorityColor(task.priority)}`}
+                  >
                     <span className="badge-icon">
                       {getPriorityIcon(task.priority)}
                     </span>
@@ -316,22 +305,21 @@ const Tasks = () => {
             <div className="empty-icon">✅</div>
             <h3 className="empty-title">No tasks found</h3>
             <p className="empty-description">
-                {filter === 'all'
+              {filter === 'all'
                 ? "You don't have any tasks yet. Let AI generate some for you!"
                 : `No tasks match the current filter: ${filter}`}
             </p>
-              <button
-                className="btn btn-primary"
-                onClick={generateAITasks}
-              >
+            <button
+              className="btn btn-primary"
+              onClick={generateAITasks}
+            >
               <span className="btn-icon">✨</span>
               Generate AI Tasks
             </button>
           </div>
         )}
       </div>
-    </div>
-    </div>
+    </Layout>
   );
 };
 
