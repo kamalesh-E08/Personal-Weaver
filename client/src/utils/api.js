@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Use dynamic baseURL: fallback to '/api' for Vercel serverless routing
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
