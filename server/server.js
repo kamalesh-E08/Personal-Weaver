@@ -12,7 +12,7 @@ dotenv.config();
 
 const app = express();
 
-const PORT = process.env.REACT_APP_API_URL;
+const PORT = process.env.REACT_APP_API_URL || 5000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 // Middleware
