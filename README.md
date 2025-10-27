@@ -1,4 +1,4 @@
-# PersonaWeaver – Personalized Planner Powered by LLM
+# PersonalWeaver – Personalized Planner Powered by LLM
 
 PersonaWeaver is a personalized planner web application designed to help users create structured, goal-oriented, and adaptable plans for their personal and professional needs. By integrating *Gemini AI*, the system generates tailored recommendations, timelines, and strategies, allowing users to stay organized and productive.
 
