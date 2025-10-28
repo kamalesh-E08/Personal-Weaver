@@ -78,8 +78,6 @@ const LandingPage = () => {
             <span className="brand-text gradient-text-primary">Personal Weaver</span>
           </div>
           <div className="nav-links">
-            <a href="#features" className="nav-link">Features</a>
-            <a href="#about" className="nav-link">About</a>
             <button 
               className="btn btn-primary"
               onClick={() => setIsLogin(!isLogin)}

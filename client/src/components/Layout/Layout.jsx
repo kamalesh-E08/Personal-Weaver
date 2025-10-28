@@ -9,20 +9,22 @@ const Layout = ({ children }) => {
     return (
         <div className="layout">
             <div className={`layout-content ${isCollapsed ? "sidebar-collapsed" : ""}`}>
-                {/* Sidebar Toggle Button */}
-                <button
-                    className="sidebar-toggle-external"
-                    onClick={toggleSidebar}
-                >
-                    <div className="hamburger-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </button>
+                {/* External toggle only when collapsed (arrow stays where it is now) */}
+                {isCollapsed && (
+                    <button
+                        className="sidebar-toggle-external"
+                        onClick={toggleSidebar}
+                    >
+                        <div className="hamburger-icon">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </button>
+                )}
 
                 {/* Sidebar */}
-                <Sidebar isCollapsed={isCollapsed} />
+                <Sidebar isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} />
 
                 {/* Main Content */}
                 <div className="main-content">

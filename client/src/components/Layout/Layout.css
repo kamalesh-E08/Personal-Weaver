@@ -8,6 +8,8 @@
 .layout-content {
     flex: 1;
     position: relative;
+    transition: margin-left 0.3s ease;
+    margin-left: 280px;
 }
 
 .layout-content.sidebar-collapsed {
@@ -17,7 +19,7 @@
 /* External Sidebar Toggle Button */
 .sidebar-toggle-external {
     position: fixed;
-    left: 280px;
+    left: 295px;
     top: 40px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -61,6 +63,12 @@
 
 .sidebar-toggle-external:hover .hamburger-icon span {
     background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* Arrow Icon */
+.arrow-icon {
+    font-size: 20px;
+    line-height: 1;
 }
 
 .layout-content.sidebar-collapsed .sidebar-toggle-external {
