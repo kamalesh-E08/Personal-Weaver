@@ -1,12 +1,12 @@
-# PersonaWeaver – Personalized Planner Powered by LLM
+# PersonalWeaver – Personalized Planner Powered by LLM
 
-PersonaWeaver is a personalized planner web application designed to help users create structured, goal-oriented, and adaptable plans for their personal and professional needs. By integrating *Gemini AI*, the system generates tailored recommendations, timelines, and strategies, allowing users to stay organized and productive.
+PersonalWeaver is a personalized planner web application designed to help users create structured, goal-oriented, and adaptable plans for their personal and professional needs. By integrating *Gemini AI*, the system generates tailored recommendations, timelines, and strategies, allowing users to stay organized and productive.
 
 ---
 
 ## 🚀 Problem Statement
 
-In today’s fast-paced world, many individuals struggle with time management, unstructured planning, and lack of personalized guidance. Existing planners and calendar tools only provide basic scheduling features without adapting to users’ unique goals or contexts. PersonaWeaver solves this problem by combining AI-driven personalization with intuitive planning features, enabling users to create *actionable, context-aware plans*.
+In today’s fast-paced world, many individuals struggle with time management, unstructured planning, and lack of personalized guidance. Existing planners and calendar tools only provide basic scheduling features without adapting to users’ unique goals or contexts. PersonalWeaver solves this problem by combining AI-driven personalization with intuitive planning features, enabling users to create *actionable, context-aware plans*.
 
 ---
 
@@ -56,8 +56,8 @@ Personal-Weaver-main/
 1. *Clone the repository*
 
    ```bash
-   git clone https://github.com/your-username/PersonaWeaver.git
-   cd PersonaWeaver
+   git clone https://github.com/your-username/PersonalWeaver.git
+   cd PersonalWeaver
    ```
 
 2. *Install dependencies*
