@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./history.css";
+import "./History.css";
 import Layout from "../Layout/Layout";
 
 const History = () => {

@@ -1,23 +1,36 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const auth = require('../middleware/auth');
+const express = require("express");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+const auth = require("../middleware/auth");
 
 const router = express.Router();
 
+// Helper functions
+const generateToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET);
+};
+
+const formatUserResponse = (user) => {
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+  };
+};
+
+const handleError = (res, error) => {
+  res.status(500).json({ message: "Server error", error: error.message });
+};
+
 // Register
-router.post('/register', async (req, res) => {
+router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: "User already exists" });
     }
 
     // Create new user
@@ -27,88 +40,66 @@ router.post('/register', async (req, res) => {
       password,
       achievements: [
         {
-          id: '1',
-          title: 'Welcome Aboard',
-          description: 'Successfully created your Personal Weaver account',
-          icon: '🎉',
+          id: "1",
+          title: "Welcome Aboard",
+          description: "Successfully created your Personal Weaver account",
+          icon: "🎉",
           earned: true,
-          earnedDate: new Date()
-        }
-      ]
+          earnedDate: new Date(),
+        },
+      ],
     });
 
     await user.save();
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
+    const token = generateToken(user._id);
     res.status(201).json({
-      message: 'User created successfully',
+      message: "User created successfully",
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
-      }
+      user: formatUserResponse(user),
     });
+    console.log(req.body);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    handleError(res, error);
   }
 });
 
 // Login
-router.post('/login', async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user
+    // Find user and validate credentials
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+    if (!user || !(await user.comparePassword(password))) {
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     // Update stats
     user.stats.totalSessions += 1;
     await user.save();
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
+    const token = generateToken(user._id);
     res.json({
-      message: 'Login successful',
+      message: "Login successful",
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
-      }
+      user: formatUserResponse(user),
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    handleError(res, error);
   }
 });
 
 // Get current user
-router.get('/me', auth, async (req, res) => {
+router.get("/me", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select('-password');
+    const user = await User.findById(req.userId).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    handleError(res, error);
   }
 });
 
