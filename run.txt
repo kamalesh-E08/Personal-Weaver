@@ -1,0 +1,4 @@
+.\venv\Scripts\activate
+uvicorn api:app --reload
+PS D:\mt-project\ai-planner-project\Personal-Weaver\Personal-Weaver\server> node server.js
+PS D:\mt-project\ai-planner-project\Personal-Weaver\Personal-Weaver\client> npm run dev
