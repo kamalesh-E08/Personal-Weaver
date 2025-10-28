@@ -14,15 +14,19 @@ const Layout = ({ children }) => {
                     className="sidebar-toggle-external"
                     onClick={toggleSidebar}
                 >
-                    <div className="hamburger-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
+                    {isCollapsed ? (
+                        <div className="arrow-icon">→</div>
+                    ) : (
+                        <div className="hamburger-icon">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    )}
                 </button>
 
                 {/* Sidebar */}
-                <Sidebar isCollapsed={isCollapsed} />
+                <Sidebar isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} />
 
                 {/* Main Content */}
                 <div className="main-content">

@@ -14,7 +14,7 @@
 }
 
 .sidebar.collapsed {
-  transform: translateX(-100%);
+  transform: translateX(-280px);
 }
 
 .sidebar-header {

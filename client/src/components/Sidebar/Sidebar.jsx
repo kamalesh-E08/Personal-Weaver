@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 import { useAuth } from "../../context/AuthContext";
 
-const Sidebar = ({ isCollapsed: controlledCollapsed }) => {
+const Sidebar = ({ isCollapsed: controlledCollapsed, toggleSidebar }) => {
   const [localCollapsed, setLocalCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
@@ -26,6 +26,10 @@ const Sidebar = ({ isCollapsed: controlledCollapsed }) => {
 
   const handleNavigation = (path) => {
     navigate(path);
+    // Collapse sidebar when navigation is clicked
+    if (toggleSidebar && !isCollapsed) {
+      toggleSidebar();
+    }
   };
 
   // Handle clicks outside the user menu
@@ -56,6 +60,10 @@ const Sidebar = ({ isCollapsed: controlledCollapsed }) => {
 
   const handleMenuOptionClick = (option) => {
     setShowUserMenu(false);
+    // Collapse sidebar when menu option is clicked
+    if (toggleSidebar && !isCollapsed) {
+      toggleSidebar();
+    }
     switch (option) {
       case 'settings':
         navigate("/profile");
