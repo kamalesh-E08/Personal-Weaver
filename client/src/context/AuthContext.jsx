@@ -15,6 +15,22 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchUser = async () => {
+    try {
+      const response = await api.get("/auth/me");
+      setUser(response.data);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      localStorage.removeItem("token");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setAuthHeader = (token) => {
+    // Token is now handled by the api interceptor
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const demoUserJson = localStorage.getItem("demoUser");
@@ -37,21 +53,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const setAuthHeader = (token) => {
-    // Token is now handled by the api interceptor
-  };
-
-  const fetchUser = async () => {
-    try {
-
-      setUser(response.data);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      localStorage.removeItem("token");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const login = async (email, password) => {
     try {

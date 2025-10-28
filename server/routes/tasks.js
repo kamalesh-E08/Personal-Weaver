@@ -42,20 +42,50 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
-// Create new task
+// Create new plan
 router.post("/", auth, async (req, res) => {
   try {
-    const task = new Task({
-      ...req.body,
+    const { title, description, category, timeline, goals, priority } = req.body;
+
+    // Map timeline (frontend) → duration (backend)
+    const durationMap = {
+      "1 week": 7,
+      "1 month": 30,
+      "3 months": 90,
+      "6 months": 180,
+      "1 year": 365,
+    };
+
+    const daysToAdd = durationMap[timeline] || 30;
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + daysToAdd);
+
+    const plan = new Plan({
+      title,
+      description,
+      category,
+      timeline,   // keep original string
+      duration: daysToAdd, // numeric form
+      goals,
+      priority,
+      dueDate,
       userId: req.userId,
+      aiGenerated: true,
     });
 
-    await task.save();
-    res.status(201).json(task);
+    await plan.save();
+
+    // Update user stats
+    await User.findByIdAndUpdate(req.userId, {
+      $inc: { "stats.plansCreated": 1 },
+    });
+
+    res.status(201).json(plan);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
+
 
 // Update task
 router.put("/:id", auth, async (req, res) => {
