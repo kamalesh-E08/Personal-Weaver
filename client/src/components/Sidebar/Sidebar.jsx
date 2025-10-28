@@ -90,6 +90,11 @@ const Sidebar = ({ isCollapsed: controlledCollapsed, toggleSidebar }) => {
             </span>
           )}
         </div>
+        {!isCollapsed && (
+          <button className="sidebar-toggle" onClick={toggleSidebar} aria-label="Collapse sidebar">
+            <span className="arrow-icon">←</span>
+          </button>
+        )}
       </div>
 
       <nav className="sidebar-nav">
