@@ -80,7 +80,7 @@ const Chat = () => {
           {/* Header */}
           <div className="chat-header">
             <div className="header-content">
-              <h1 className="chat-title gradient-text">AI Assistant</h1>
+              <h1 className="chat-title gradient-text">AI Planner</h1>
               <p className="chat-subtitle">Your intelligent personal assistant powered by AI</p>
             </div>
             <div className="status-badge">
