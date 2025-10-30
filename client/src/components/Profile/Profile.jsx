@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Profile.css";
 import Layout from "../Layout/Layout";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../utils/api";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -90,15 +91,139 @@ const Profile = () => {
     });
   };
 
-  const handleSaveProfile = () => {
-    setIsEditing(false);
-    console.log("Saving profile:", profile);
+  const toggleEditing = () => {
+    if (!isEditing) {
+      setOriginalProfile({
+        profile: { ...profile },
+        preferences: { ...preferences },
+      });
+    }
+    setIsEditing(!isEditing);
   };
+
+  const [originalProfile, setOriginalProfile] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await api.get("/users/profile");
+      const userData = res.data;
+      // Map user fields into local profile and preferences state
+      setProfile((p) => ({
+        ...p,
+        name: userData.name || p.name,
+        email: userData.email || p.email,
+        phone: userData.phone || p.phone,
+        location: userData.location || p.location,
+        bio: userData.bio || p.bio,
+        timezone:
+          (userData.preferences && userData.preferences.timezone) || p.timezone,
+        workingHours:
+          (userData.preferences && userData.preferences.workingHours) ||
+          p.workingHours,
+        preferredLanguage:
+          (userData.preferences && userData.preferences.preferredLanguage) ||
+          p.preferredLanguage,
+      }));
+
+      setPreferences((prev) => ({ ...prev, ...(userData.preferences || {}) }));
+      setOriginalProfile({
+        profile: userData,
+        preferences: userData.preferences || {},
+      });
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handlePreferenceChange = (key, value) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      const payload = {
+        name: profile.name,
+        email: profile.email,
+        bio: profile.bio,
+        phone: profile.phone,
+        location: profile.location,
+        preferences: {
+          ...preferences,
+          timezone: profile.timezone,
+          workingHours: profile.workingHours,
+          preferredLanguage: profile.preferredLanguage,
+        },
+      };
+
+      const res = await api.put("/users/profile", payload);
+      const updated = res.data;
+      setProfile((p) => ({
+        ...p,
+        name: updated.name || p.name,
+        email: updated.email || p.email,
+        phone: updated.phone || p.phone,
+        location: updated.location || p.location,
+        bio: updated.bio || p.bio,
+        timezone:
+          (updated.preferences && updated.preferences.timezone) || p.timezone,
+        workingHours:
+          (updated.preferences && updated.preferences.workingHours) ||
+          p.workingHours,
+        preferredLanguage:
+          (updated.preferences && updated.preferences.preferredLanguage) ||
+          p.preferredLanguage,
+      }));
+      setPreferences((prev) => ({ ...prev, ...(updated.preferences || {}) }));
+      setOriginalProfile({
+        profile: updated,
+        preferences: updated.preferences || {},
+      });
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      // Optionally show toast
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (originalProfile) {
+      const u = originalProfile.profile;
+      setProfile((p) => ({
+        ...p,
+        name: u.name || p.name,
+        email: u.email || p.email,
+        phone: u.phone || p.phone,
+        location: u.location || p.location,
+        bio: u.bio || p.bio,
+        timezone:
+          (originalProfile.preferences &&
+            originalProfile.preferences.timezone) ||
+          p.timezone,
+        workingHours:
+          (originalProfile.preferences &&
+            originalProfile.preferences.workingHours) ||
+          p.workingHours,
+        preferredLanguage:
+          (originalProfile.preferences &&
+            originalProfile.preferences.preferredLanguage) ||
+          p.preferredLanguage,
+      }));
+      setPreferences((prev) => ({
+        ...prev,
+        ...(originalProfile.preferences || {}),
+      }));
+    }
+    setIsEditing(false);
+  };
 
   return (
     <Layout>
@@ -107,7 +232,9 @@ const Profile = () => {
         <div className="profile-header">
           <div className="header-content">
             <h1 className="profile-title gradient-text">Profile & Settings</h1>
-            <p className="profile-subtitle">Manage your account and personalize your experience</p>
+            <p className="profile-subtitle">
+              Manage your account and personalize your experience
+            </p>
           </div>
         </div>
 
@@ -129,8 +256,7 @@ const Profile = () => {
               Preferences
             </button>
             <button
-              className={`tab ${activeTab === "achievements" ? "active" : ""
-                }`}
+              className={`tab ${activeTab === "achievements" ? "active" : ""}`}
               onClick={() => setActiveTab("achievements")}
             >
               <span className="tab-icon">🏆</span>
@@ -167,10 +293,7 @@ const Profile = () => {
                   </div>
                 </div>
 
-                <button
-                  className="btn btn-outline"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
+                <button className="btn btn-outline" onClick={toggleEditing}>
                   <span className="btn-icon">✏️</span>
                   {isEditing ? "Cancel" : "Edit Profile"}
                 </button>
@@ -181,7 +304,7 @@ const Profile = () => {
             <div className="stats-grid">
               <div className="stat-card card">
                 <div className="stat-value">{stats.totalSessions}</div>
-                <div className="stat-label">Total Sessions</div>
+                <div className="stat-label">Total sessions</div>
               </div>
               <div className="stat-card card">
                 <div className="stat-value">{stats.plansCreated}</div>
@@ -190,18 +313,6 @@ const Profile = () => {
               <div className="stat-card card">
                 <div className="stat-value">{stats.tasksCompleted}</div>
                 <div className="stat-label">Tasks Completed</div>
-              </div>
-              <div className="stat-card card">
-                <div className="stat-value">{stats.streakDays}</div>
-                <div className="stat-label">Day Streak</div>
-              </div>
-              <div className="stat-card card">
-                <div className="stat-value">{stats.timesSaved}</div>
-                <div className="stat-label">Time Saved</div>
-              </div>
-              <div className="stat-card card">
-                <div className="stat-value">{stats.productivityScore}</div>
-                <div className="stat-label">Productivity Score</div>
               </div>
             </div>
 
@@ -307,9 +418,7 @@ const Profile = () => {
                       disabled={!isEditing}
                       className="select"
                     >
-                      <option value="America/Los_Angeles">
-                        Pacific Time
-                      </option>
+                      <option value="America/Los_Angeles">Pacific Time</option>
                       <option value="America/Denver">Mountain Time</option>
                       <option value="America/Chicago">Central Time</option>
                       <option value="America/New_York">Eastern Time</option>
@@ -344,7 +453,7 @@ const Profile = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setIsEditing(false)}
+                      onClick={handleCancelEdit}
                       className="btn btn-outline"
                     >
                       Cancel
@@ -399,9 +508,7 @@ const Profile = () => {
 
                   <div className="preference-item">
                     <div className="preference-info">
-                      <div className="preference-label">
-                        Push Notifications
-                      </div>
+                      <div className="preference-label">Push Notifications</div>
                       <div className="preference-description">
                         Get real-time notifications in your browser
                       </div>
@@ -602,14 +709,13 @@ const Profile = () => {
                 {achievements.map((achievement) => (
                   <div
                     key={achievement.id}
-                    className={`achievement-item ${achievement.earned ? "earned" : "locked"
-                      }`}
+                    className={`achievement-item ${
+                      achievement.earned ? "earned" : "locked"
+                    }`}
                   >
                     <div className="achievement-icon">{achievement.icon}</div>
                     <div className="achievement-content">
-                      <h4 className="achievement-title">
-                        {achievement.title}
-                      </h4>
+                      <h4 className="achievement-title">{achievement.title}</h4>
                       <p className="achievement-description">
                         {achievement.description}
                       </p>

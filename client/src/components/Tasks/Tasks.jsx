@@ -2,13 +2,49 @@ import React, { useState, useEffect, useCallback } from "react";
 import "./Tasks.css";
 import Layout from "../Layout/Layout";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../utils/api";
 
 const Tasks = () => {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("all");
   const [sortBy, setSortBy] = useState("priority");
   const [loading, setLoading] = useState(false);
+  const [showAddTaskForm, setShowAddTaskForm] = useState(false);
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    category: "Work",
+    priority: "medium",
+    estimatedTime: "1 hour",
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+  });
   const { user } = useAuth();
+
+  const createTask = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post("/tasks", newTask);
+      await fetchTasks();
+      setShowAddTaskForm(false);
+      setNewTask({
+        title: "",
+        description: "",
+        category: "Work",
+        priority: "medium",
+        estimatedTime: "1 hour",
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+      });
+    } catch (error) {
+      console.error("Error creating task:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
@@ -22,15 +58,8 @@ const Tasks = () => {
         queryParams.append("sortBy", sortBy);
       }
 
-      const response = await fetch(`/api/tasks?${queryParams.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch tasks");
-      }
-      const data = await response.json();
+      const response = await api.get(`/tasks?${queryParams.toString()}`);
+      const data = response.data;
       setTasks(data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -95,19 +124,10 @@ const Tasks = () => {
       )
     );
     try {
-      const token = localStorage.getItem("token");
       const taskToUpdate = tasks.find((task) => task._id === taskId);
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ completed: !taskToUpdate.completed }),
+      await api.put(`/tasks/${taskId}`, {
+        completed: !taskToUpdate.completed,
       });
-      if (!response.ok) {
-        throw new Error("Failed to update task completion");
-      }
       // If the update was successful, refetch tasks to ensure state is synchronized with backend
       fetchTasks();
     } catch (error) {
@@ -124,20 +144,11 @@ const Tasks = () => {
   const generateAITasks = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/tasks/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ count: 2 }), // Generate 2 tasks as an example
+      const response = await api.post("/tasks/generate", {
+        count: 3, // Generate 3 tasks at a time
+        category: filter !== "all" ? filter : undefined,
       });
-      if (!response.ok) {
-        throw new Error("Failed to generate AI tasks");
-      }
-      const newTasks = await response.json();
-      setTasks((prevTasks) => [...prevTasks, ...newTasks]);
+      await fetchTasks(); // Refresh the task list to include both AI and manual tasks
     } catch (error) {
       console.error("Error generating AI tasks:", error);
     } finally {
@@ -156,12 +167,18 @@ const Tasks = () => {
         <div className="tasks-header">
           <div className="header-content">
             <h1 className="tasks-title gradient-text">Task Management</h1>
-            <p className="tasks-subtitle">Organize and track your AI-generated tasks</p>
+            <p className="tasks-subtitle">
+              Organize and track your AI-generated tasks
+            </p>
           </div>
           <div className="header-actions">
-            <button className="btn btn-primary">
-              <span className="btn-icon">+</span>
-              Generate Tasks
+            <button
+              className="btn btn-primary"
+              onClick={generateAITasks}
+              disabled={loading}
+            >
+              <span className="btn-icon">✨</span>
+              {loading ? "Generating..." : "Generate Tasks"}
             </button>
           </div>
         </div>
@@ -184,8 +201,8 @@ const Tasks = () => {
             </div>
             <div className="stat-value">{completedCount}</div>
             <div className="stat-change">
-              {Math.round((completedCount / Math.max(tasks.length, 1)) * 100)}
-              % completion rate
+              {Math.round((completedCount / Math.max(tasks.length, 1)) * 100)}%
+              completion rate
             </div>
           </div>
 
@@ -233,11 +250,118 @@ const Tasks = () => {
             </select>
           </div>
 
-          <button className="btn btn-outline">
+          <button
+            className="btn btn-outline"
+            onClick={() => setShowAddTaskForm(true)}
+          >
             <span className="btn-icon">+</span>
             Add Manual Task
           </button>
         </div>
+
+        {/* Add Task Form */}
+        {showAddTaskForm && (
+          <div className="add-task-form card">
+            <form onSubmit={createTask}>
+              <h3>Create New Task</h3>
+              <div className="form-group">
+                <label>Title</label>
+                <input
+                  type="text"
+                  value={newTask.title}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, title: e.target.value })
+                  }
+                  required
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label>Description</label>
+                <textarea
+                  value={newTask.description}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, description: e.target.value })
+                  }
+                  className="form-control"
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Category</label>
+                  <select
+                    value={newTask.category}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, category: e.target.value })
+                    }
+                    className="form-control"
+                  >
+                    <option value="Work">Work</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Health">Health</option>
+                    <option value="Learning">Learning</option>
+                    <option value="Finance">Finance</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Priority</label>
+                  <select
+                    value={newTask.priority}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, priority: e.target.value })
+                    }
+                    className="form-control"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Due Date</label>
+                  <input
+                    type="date"
+                    value={newTask.dueDate}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, dueDate: e.target.value })
+                    }
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Estimated Time</label>
+                  <input
+                    type="text"
+                    value={newTask.estimatedTime}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, estimatedTime: e.target.value })
+                    }
+                    placeholder="e.g. 1 hour"
+                    className="form-control"
+                  />
+                </div>
+              </div>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setShowAddTaskForm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={loading}
+                >
+                  {loading ? "Creating..." : "Create Task"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Tasks List */}
         <div className="tasks-list">
@@ -256,8 +380,9 @@ const Tasks = () => {
 
                   <div className="task-info">
                     <h3
-                      className={`task-title ${task.completed ? "completed" : ""
-                        }`}
+                      className={`task-title ${
+                        task.completed ? "completed" : ""
+                      }`}
                     >
                       {task.title}
                     </h3>
@@ -285,9 +410,7 @@ const Tasks = () => {
                       AI
                     </span>
                   )}
-                  <span
-                    className={`badge ${getPriorityColor(task.priority)}`}
-                  >
+                  <span className={`badge ${getPriorityColor(task.priority)}`}>
                     <span className="badge-icon">
                       {getPriorityIcon(task.priority)}
                     </span>
@@ -300,22 +423,30 @@ const Tasks = () => {
           ))}
         </div>
 
-        {sortedTasks.length === 0 && (
+        {sortedTasks.length === 0 && !loading && (
           <div className="empty-state card">
             <div className="empty-icon">✅</div>
             <h3 className="empty-title">No tasks found</h3>
             <p className="empty-description">
-              {filter === 'all'
+              {filter === "all"
                 ? "You don't have any tasks yet. Let AI generate some for you!"
                 : `No tasks match the current filter: ${filter}`}
             </p>
             <button
               className="btn btn-primary"
               onClick={generateAITasks}
+              disabled={loading}
             >
               <span className="btn-icon">✨</span>
-              Generate AI Tasks
+              {loading ? "Generating..." : "Generate AI Tasks"}
             </button>
+          </div>
+        )}
+
+        {loading && (
+          <div className="loading-state card">
+            <div className="loading-spinner"></div>
+            <p>Loading tasks...</p>
           </div>
         )}
       </div>
