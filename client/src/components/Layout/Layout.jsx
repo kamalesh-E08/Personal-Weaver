@@ -7,28 +7,32 @@ import "./Layout.css";
 const Layout = () => {
   const { isCollapsed, toggleSidebar } = useSidebar();
 
-  return (
-    <div className="layout">
-      <div
-        className={`layout-content ${isCollapsed ? "sidebar-collapsed" : ""}`}
-      >
-        {/* Sidebar Toggle Button */}
-        <button className="sidebar-toggle-external" onClick={toggleSidebar}>
-          <div className="hamburger-icon">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </button>
+    return (
+        <div className="layout">
+            <div className={`layout-content ${isCollapsed ? "sidebar-collapsed" : ""}`}>
+                {/* External toggle only when collapsed (arrow stays where it is now) */}
+                {isCollapsed && (
+                    <button
+                        className="sidebar-toggle-external"
+                        onClick={toggleSidebar}
+                    >
+                        <div className="hamburger-icon">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </button>
+                )}
 
-        {/* Sidebar */}
-        <Sidebar isCollapsed={isCollapsed} />
-        {/* Main Content */}
-        <div className="main-content">
-          <Outlet />
+                {/* Sidebar */}
+                <Sidebar isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} />
+
+                {/* Main Content */}
+                <div className="main-content">
+                    {children}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
   );
 };
 
