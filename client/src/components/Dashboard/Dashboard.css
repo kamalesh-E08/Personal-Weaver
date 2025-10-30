@@ -5,6 +5,25 @@
   position: relative;
 }
 
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.empty-state p {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 8px;
+}
+
+.empty-state small {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
 /* New top section styles */
 .dashboard-top-section {
   position: fixed;
@@ -377,16 +396,20 @@
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: linear-gradient(135deg,
-      rgba(139, 92, 246, 0.1) 0%,
-      rgba(236, 72, 153, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.1) 0%,
+    rgba(236, 72, 153, 0.1) 100%
+  );
   border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 .quick-action-card:hover {
-  background: linear-gradient(135deg,
-      rgba(139, 92, 246, 0.2) 0%,
-      rgba(236, 72, 153, 0.2) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.2) 0%,
+    rgba(236, 72, 153, 0.2) 100%
+  );
   transform: translateY(-4px);
 }
 

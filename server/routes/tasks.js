@@ -19,15 +19,42 @@ router.get("/", auth, async (req, res) => {
     let tasksQuery = Task.find(query);
 
     // Apply sorting
-    if (sortBy === "priority") {
-      const priorityOrder = { high: 3, medium: 2, low: 1 };
-      tasksQuery = tasksQuery.sort(
-        (a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]
-      );
-    } else if (sortBy === "dueDate") {
-      tasksQuery = tasksQuery.sort(
-        (a, b) => new Date(a.dueDate) - new Date(b.dueDate)
-      );
+    if (sortBy) {
+      const [field, order] = sortBy.split(":");
+      const sortOrder = order === "-1" ? -1 : 1;
+
+      switch (field) {
+        case "priority":
+          // Use MongoDB's aggregation to sort by priority level
+          tasksQuery = Task.aggregate([
+            { $match: query },
+            {
+              $addFields: {
+                priorityOrder: {
+                  $switch: {
+                    branches: [
+                      { case: { $eq: ["$priority", "high"] }, then: 3 },
+                      { case: { $eq: ["$priority", "medium"] }, then: 2 },
+                      { case: { $eq: ["$priority", "low"] }, then: 1 },
+                    ],
+                    default: 0,
+                  },
+                },
+              },
+            },
+            { $sort: { priorityOrder: sortOrder } },
+          ]);
+          break;
+        case "dueDate":
+          tasksQuery = tasksQuery.sort({ dueDate: sortOrder });
+          break;
+        case "createdAt":
+          tasksQuery = tasksQuery.sort({ createdAt: sortOrder });
+          break;
+        default:
+          // Default sort by creation date, newest first
+          tasksQuery = tasksQuery.sort({ createdAt: -1 });
+      }
     }
 
     // Apply limit if provided
