@@ -22,7 +22,17 @@ router.get("/profile", auth, async (req, res) => {
 // Update user profile
 router.put("/profile", auth, async (req, res) => {
   try {
-    const { name, email, bio, preferences } = req.body;
+    const {
+      name,
+      email,
+      bio,
+      preferences,
+      phone,
+      location,
+      timezone,
+      workingHours,
+      preferredLanguage,
+    } = req.body;
 
     const user = await User.findById(req.userId);
     if (!user) {
@@ -41,7 +51,15 @@ router.put("/profile", auth, async (req, res) => {
     if (name) user.name = name;
     if (email) user.email = email;
     if (bio) user.bio = bio;
-    if (preferences) user.preferences = { ...user.preferences, ...preferences };
+    if (phone !== undefined) user.phone = phone;
+    if (location !== undefined) user.location = location;
+
+    // Merge preferences and allow storing some profile-like fields inside preferences
+    user.preferences = { ...user.preferences, ...(preferences || {}) };
+    if (timezone) user.preferences.timezone = timezone;
+    if (workingHours) user.preferences.workingHours = workingHours;
+    if (preferredLanguage)
+      user.preferences.preferredLanguage = preferredLanguage;
 
     await user.save();
 
@@ -111,12 +129,14 @@ router.get("/stats", auth, async (req, res) => {
     const Task = require("../models/Task");
     const Plan = require("../models/Plan");
     const ChatHistory = require("../models/ChatHistory");
+    console.log("Fetching stats for user:", req.userId);
 
-    const [totalTasks, completedTasks, totalPlans, totalChats] =
+    const [totalTasks, completedTasks, totalPlans, activePlans, totalChats] =
       await Promise.all([
         Task.countDocuments({ userId: req.userId }),
         Task.countDocuments({ userId: req.userId, completed: true }),
         Plan.countDocuments({ userId: req.userId }),
+        Plan.countDocuments({ userId: req.userId, status: "active" }),
         ChatHistory.countDocuments({ userId: req.userId }),
       ]);
 
@@ -125,6 +145,7 @@ router.get("/stats", auth, async (req, res) => {
       completedTasks,
       pendingTasks: totalTasks - completedTasks,
       totalPlans,
+      activePlans,
       totalChats,
       completionRate:
         totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,

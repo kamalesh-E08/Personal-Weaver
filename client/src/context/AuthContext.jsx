@@ -108,25 +108,28 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Error registering user:", error);
       // Demo mode fallback: allow local registration when backend is unavailable
-      const demoUser = {
-        id: "demo",
-        name,
-        email,
+      // const demoUser = {
+      //   id: "demo",
+      //   name,
+      //   email,
+      // };
+      // try {
+      //   localStorage.setItem("demoUser", JSON.stringify(demoUser));
+      //   localStorage.setItem(
+      //     "demoCredentials",
+      //     JSON.stringify({ email, password })
+      //   );
+      // } catch {
+      //   // Intentionally left empty for demo mode fallback
+      // }
+      // const token = "demo-token";
+      // localStorage.setItem("token", token);
+      // setAuthHeader(token);
+      // setUser(demoUser);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Registration failed",
       };
-      try {
-        localStorage.setItem("demoUser", JSON.stringify(demoUser));
-        localStorage.setItem(
-          "demoCredentials",
-          JSON.stringify({ email, password })
-        );
-      } catch {
-        // Intentionally left empty for demo mode fallback
-      }
-      const token = "demo-token";
-      localStorage.setItem("token", token);
-      setAuthHeader(token);
-      setUser(demoUser);
-      return { success: true, message: "Registered (demo mode)" };
     }
   };
 

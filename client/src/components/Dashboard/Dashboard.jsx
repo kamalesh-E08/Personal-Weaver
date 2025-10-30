@@ -3,6 +3,7 @@ import "./Dashboard.css";
 import Layout from "../Layout/Layout";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import api from "../../utils/api";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -12,10 +13,10 @@ const Dashboard = () => {
     completedTasks: 0,
     pendingTasks: 0,
     totalPlans: 0,
+    activePlans: 0,
     totalChats: 0,
     completionRate: 0,
     productivityScore: 0,
-    activePlans: 0,
   });
   const [recentTasks, setRecentTasks] = useState([]);
   const [recentPlans, setRecentPlans] = useState([]);
@@ -30,31 +31,30 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No authentication token found");
-
-      const statsResponse = await fetch("/api/users/stats", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!statsResponse.ok) throw new Error("Failed to fetch user stats");
-      const userStats = await statsResponse.json();
+      // Get stats - using correct endpoint and axios response handling
+      const { data: userStats } = await api.get("/users/stats");
+      console.log("Stats received:", userStats);
       setStats(userStats);
 
-      const tasksResponse = await fetch("/api/tasks?limit=4&filter=pending", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!tasksResponse.ok) throw new Error("Failed to fetch recent tasks");
-      const tasksData = await tasksResponse.json();
+      // Get tasks
+      const { data: tasksData } = await api.get(
+        "/tasks?limit=4&filter=pending"
+      );
+      console.log("Tasks received:", tasksData);
       setRecentTasks(tasksData);
 
-      const plansResponse = await fetch("/api/plans?limit=3&status=active", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!plansResponse.ok) throw new Error("Failed to fetch recent plans");
-      const plansData = await plansResponse.json();
+      // Get plans
+      const { data: plansData } = await api.get("/plans?limit=3&status=active");
+      console.log("Plans received:", plansData);
       setRecentPlans(plansData);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
+      if (error.response) {
+        console.error("Server responded with error:", {
+          status: error.response.status,
+          data: error.response.data,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -132,9 +132,10 @@ const Dashboard = () => {
                 <div
                   className="progress-fill"
                   style={{
-                    width: `${(stats.completedTasks / Math.max(stats.totalTasks, 1)) *
+                    width: `${
+                      (stats.completedTasks / Math.max(stats.totalTasks, 1)) *
                       100
-                      }%`,
+                    }%`,
                   }}
                 ></div>
               </div>
@@ -147,7 +148,6 @@ const Dashboard = () => {
               <span className="stat-icon">📊</span>
             </div>
             <div className="stat-value">{stats.productivityScore}%</div>
-            <div className="stat-change">+5 from last week</div>
           </div>
 
           <div className="stat-card card">
@@ -156,20 +156,6 @@ const Dashboard = () => {
               <span className="stat-icon">🎯</span>
             </div>
             <div className="stat-value">{stats.activePlans}</div>
-            <div className="stat-change">2 in progress</div>
-          </div>
-
-          <div className="stat-card card">
-            <div className="stat-header">
-              <span className="stat-label">Weekly Goal</span>
-              <span className="stat-icon">🏆</span>
-            </div>
-            <div className="stat-value">85%</div>
-            <div className="stat-progress">
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: "85%" }}></div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -198,13 +184,14 @@ const Dashboard = () => {
                     <input
                       type="checkbox"
                       checked={task.completed}
-                      onChange={() => { }}
+                      onChange={() => {}}
                     />
                   </div>
                   <div className="task-content">
                     <h4
-                      className={`task-title ${task.completed ? "completed" : ""
-                        }`}
+                      className={`task-title ${
+                        task.completed ? "completed" : ""
+                      }`}
                     >
                       {task.title}
                     </h4>
@@ -259,10 +246,11 @@ const Dashboard = () => {
                   <div className="plan-header">
                     <h4 className="plan-title">{plan.title}</h4>
                     <span
-                      className={`badge ${plan.status === "completed"
+                      className={`badge ${
+                        plan.status === "completed"
                           ? "badge-success"
                           : "badge-primary"
-                        }`}
+                      }`}
                     >
                       {plan.status}
                     </span>

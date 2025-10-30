@@ -8,13 +8,59 @@ const router = express.Router();
 // Get all plans for user
 router.get("/", auth, async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, category, duration, sortBy, filter, limit } = req.query;
+
     let query = { userId: req.userId };
-    const { limit } = req.query;
 
-    if (status) query.status = status;
+    // Apply filters
+    if (status && ["active", "completed", "paused"].includes(status)) {
+      query.status = status;
+    }
+    if (category) {
+      query.category = category;
+    }
+    if (duration) {
+      query.duration = duration;
+    }
+    if (filter === "ai-generated") {
+      query.aiGenerated = true;
+    }
+    if (filter === "manual") {
+      query.aiGenerated = false;
+    }
+    if (filter === "overdue") {
+      query.dueDate = { $lt: new Date() };
+      query.status = { $ne: "completed" };
+    }
+    if (filter === "upcoming") {
+      query.dueDate = {
+        $gte: new Date(),
+        $lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Next 7 days
+      };
+    }
+    if (filter === "high-priority") {
+      query.category = "high";
+    }
 
-    let plansQuery = Plan.find(query).populate("tasks");
+    let plansQuery = Plan.find(query).populate("tasks").select("-__v"); // Exclude version key
+
+    // Apply sorting
+    switch (sortBy) {
+      case "dueDate":
+        plansQuery = plansQuery.sort({ dueDate: 1 });
+        break;
+      case "progress":
+        plansQuery = plansQuery.sort({ progress: -1 });
+        break;
+      case "title":
+        plansQuery = plansQuery.sort({ title: 1 });
+        break;
+      case "category":
+        plansQuery = plansQuery.sort({ category: 1 });
+        break;
+      default:
+        plansQuery = plansQuery.sort({ createdAt: -1 }); // Default: newest first
+    }
 
     // Apply limit if provided
     if (limit) {
@@ -22,7 +68,31 @@ router.get("/", auth, async (req, res) => {
     }
 
     const plans = await plansQuery;
-    res.json(plans);
+
+    // Add metadata about total counts
+    const totalPlans = await Plan.countDocuments({ userId: req.userId });
+    const activePlans = await Plan.countDocuments({
+      userId: req.userId,
+      status: "active",
+    });
+    const completedPlans = await Plan.countDocuments({
+      userId: req.userId,
+      status: "completed",
+    });
+    const aiGeneratedPlans = await Plan.countDocuments({
+      userId: req.userId,
+      aiGenerated: true,
+    });
+
+    res.json({
+      plans,
+      metadata: {
+        total: totalPlans,
+        active: activePlans,
+        completed: completedPlans,
+        aiGenerated: aiGeneratedPlans,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -31,7 +101,11 @@ router.get("/", auth, async (req, res) => {
 // Create new plan
 router.post("/", auth, async (req, res) => {
   try {
-    const { title, description, category, duration } = req.body;
+    const { title, description, goals, timeline, priority } = req.body;
+
+    // Map frontend fields to backend model
+    const duration = timeline?.toLowerCase().replace(" ", "") || "1month";
+    const category = priority || "medium";
 
     // Calculate due date based on duration
     const durationMap = {
@@ -49,6 +123,7 @@ router.post("/", auth, async (req, res) => {
     const plan = new Plan({
       title,
       description,
+      goals: goals || [],
       category,
       duration,
       dueDate,

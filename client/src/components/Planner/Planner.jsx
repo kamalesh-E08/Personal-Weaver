@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import "./Planner.css";
 import Layout from "../Layout/Layout";
+import api from "../../utils/api";
 
 const Planner = () => {
   const { user } = useAuth();
@@ -21,11 +22,9 @@ const Planner = () => {
     fetchPlans();
   }, []);
 
-  const API_BASE = "http://localhost:5000/api";
-
   const fetchPlans = async () => {
     try {
-      const response = await axios.get("/plans");
+      const response = await api.get("/plans");
       setPlans(response.data);
     } catch (error) {
       console.error("Error fetching plans:", error);
@@ -37,8 +36,21 @@ const Planner = () => {
   const handleCreatePlan = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("/plans", newPlan);
+      // Transform the data to match backend expectations
+      const planData = {
+        title: newPlan.title,
+        description: newPlan.description,
+        category: newPlan.priority, // Using priority as category
+        duration: newPlan.timeline?.toLowerCase().replace(" ", ""), // Convert "1 week" to "1week"
+        goals: newPlan.goals,
+      };
+
+      const response = await api.post("/plans", planData);
+
+      // Update local state with the response data
       setPlans([response.data, ...plans]);
+
+      // Reset form
       setNewPlan({
         title: "",
         description: "",
@@ -47,8 +59,17 @@ const Planner = () => {
         priority: "medium",
       });
       setShowCreateForm(false);
+
+      // Show success message
+      console.log("Plan created successfully");
     } catch (error) {
       console.error("Error creating plan:", error);
+      // Show error details to help debugging
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+      }
+
       // Fallback: append locally
       const local = {
         _id: Date.now().toString(),
@@ -62,7 +83,7 @@ const Planner = () => {
 
   const handleDeletePlan = async (planId) => {
     try {
-      await axios.delete(`/plans/${planId}`);
+      await api.delete(`/plans/${planId}`);
       setPlans(plans.filter((plan) => plan._id !== planId));
     } catch (error) {
       console.error("Error deleting plan:", error);

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import "./History.css";
 import Layout from "../Layout/Layout";
+import api from "../../utils/api";
 
 const History = () => {
   const [historyItems, setHistoryItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [dateRange, setDateRange] = useState("all");
-  const [loading, setLoading] = useState(true); // loader state
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -19,14 +20,7 @@ const History = () => {
       setLoading(true);
       setError(null);
 
-      const res = await fetch("/history", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          // You can add token here if auth is required:
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        },
-      });
+      const res = await api.get("/history")
 
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -34,6 +28,7 @@ const History = () => {
 
       const data = await res.json();
       setHistoryItems(Array.isArray(data) ? data : []);
+      console.log(data);
     } catch (err) {
       console.error("Error fetching history:", err);
       setError("Failed to fetch history. Please try again later.");
