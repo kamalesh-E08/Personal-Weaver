@@ -7,16 +7,9 @@ const Profile = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: user?.name || "Alex Wilson",
-    email: user?.email || "alex.wilson@example.com",
-    phone: "+1 (555) 123-4567",
-    location: "San Francisco, CA",
-    bio: "Product manager passionate about productivity and AI-powered solutions. Always looking for ways to optimize workflows and achieve better work-life balance.",
-    timezone: "America/Los_Angeles",
-    workingHours: "9:00 AM - 6:00 PM",
-    preferredLanguage: "English",
-  });
+  // Start empty and load real data from the server instead of showing dummy values
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
@@ -29,14 +22,14 @@ const Profile = () => {
     smartScheduling: true,
   });
 
-  const stats = {
-    totalSessions: 127,
-    plansCreated: 15,
-    tasksCompleted: 89,
-    productivityScore: 92,
-    streakDays: 12,
-    timesSaved: "24 hours",
-  };
+  const [stats, setStats] = useState({
+    totalSessions: 0,
+    plansCreated: 0,
+    tasksCompleted: 0,
+    productivityScore: 0,
+    streakDays: 0,
+    timesSaved: "0 hours",
+  });
 
   const achievements = [
     {
@@ -104,27 +97,33 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
 
   const fetchProfile = async () => {
+    setProfileLoading(true);
     try {
       const res = await api.get("/users/profile");
       const userData = res.data;
-      // Map user fields into local profile and preferences state
-      setProfile((p) => ({
-        ...p,
-        name: userData.name || p.name,
-        email: userData.email || p.email,
-        phone: userData.phone || p.phone,
-        location: userData.location || p.location,
-        bio: userData.bio || p.bio,
+
+      // Build profile object from returned user data
+      const mappedProfile = {
+        name: userData.name || user?.name || "",
+        email: userData.email || user?.email || "",
+        phone: userData.phone || "",
+        location: userData.location || "",
+        bio: userData.bio || "",
         timezone:
-          (userData.preferences && userData.preferences.timezone) || p.timezone,
+          (userData.preferences && userData.preferences.timezone) ||
+          (user?.preferences && user.preferences.timezone) ||
+          "",
         workingHours:
           (userData.preferences && userData.preferences.workingHours) ||
-          p.workingHours,
+          (user?.preferences && user.preferences.workingHours) ||
+          "",
         preferredLanguage:
           (userData.preferences && userData.preferences.preferredLanguage) ||
-          p.preferredLanguage,
-      }));
+          (user?.preferences && user.preferences.preferredLanguage) ||
+          "",
+      };
 
+      setProfile(mappedProfile);
       setPreferences((prev) => ({ ...prev, ...(userData.preferences || {}) }));
       setOriginalProfile({
         profile: userData,
@@ -132,13 +131,68 @@ const Profile = () => {
       });
     } catch (err) {
       console.error("Failed to fetch profile:", err);
+      // Fallback: use auth user if available
+      if (user) {
+        setProfile({
+          name: user.name || "",
+          email: user.email || "",
+          phone: user.phone || "",
+          location: user.location || "",
+          bio: user.bio || "",
+          timezone: (user.preferences && user.preferences.timezone) || "",
+          workingHours:
+            (user.preferences && user.preferences.workingHours) || "",
+          preferredLanguage:
+            (user.preferences && user.preferences.preferredLanguage) || "",
+        });
+        setPreferences((prev) => ({ ...prev, ...(user.preferences || {}) }));
+      }
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await api.get("/users/stats");
+      setStats((s) => ({ ...s, ...res.data }));
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
     }
   };
 
   useEffect(() => {
     fetchProfile();
+    fetchStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Show a simple loading placeholder while profile is being fetched
+  if (profileLoading) {
+    return (
+      <div className="profile-container">
+        <div className="loading-state card">
+          <div className="loading-spinner" />
+          <p>Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="profile-container">
+        <div className="empty-state card">
+          <div className="empty-icon">🙋‍♀️</div>
+          <h3 className="empty-title">Profile not available</h3>
+          <p className="empty-description">
+            We couldn't load your profile. Try refreshing the page or check your
+            network connection.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handlePreferenceChange = (key, value) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
@@ -445,14 +499,16 @@ const Profile = () => {
                     type="button"
                     onClick={handleSaveProfile}
                     className="btn btn-primary"
+                    disabled={saving}
                   >
                     <span className="btn-icon">💾</span>
-                    Save Changes
+                    {saving ? "Saving..." : "Save Changes"}
                   </button>
                   <button
                     type="button"
                     onClick={handleCancelEdit}
                     className="btn btn-outline"
+                    disabled={saving}
                   >
                     Cancel
                   </button>

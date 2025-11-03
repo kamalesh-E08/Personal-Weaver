@@ -68,9 +68,15 @@
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .chat-messages {
@@ -98,7 +104,11 @@
 .welcome-icon {
   font-size: 64px;
   margin-bottom: 24px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.2) 0%,
+    rgba(236, 72, 153, 0.2) 100%
+  );
   border-radius: 50%;
   width: 120px;
   height: 120px;
@@ -263,12 +273,22 @@
   animation: typing 1.4s infinite ease-in-out;
 }
 
-.typing-dot:nth-child(1) { animation-delay: -0.32s; }
-.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+.typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
 
 @keyframes typing {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
 }
 
 .typing-text {
@@ -349,18 +369,18 @@
   .chat-content {
     padding-left: 0;
   }
-  
+
   .chat-container {
     max-width: 100%;
     padding: 24px 16px;
   }
-  
+
   .chat-header {
     flex-direction: column;
     gap: 16px;
     text-align: center;
   }
-  
+
   .quick-prompts {
     grid-template-columns: 1fr;
   }
@@ -370,24 +390,76 @@
   .chat-container {
     padding: 16px;
   }
-  
+
   .header-content h1 {
     font-size: 28px;
   }
-  
+
   .chat-input-container {
     flex-direction: column;
+    .error-message {
+      color: #ef4444;
+      background-color: rgba(239, 68, 68, 0.1);
+      border-radius: 6px;
+      padding: 8px 12px;
+    }
+
+    .error-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .error-icon {
+      font-size: 16px;
+    }
+
+    .plan-message {
+      padding: 8px;
+      background: rgba(139, 92, 246, 0.1);
+      border-radius: 6px;
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
+    .plan-message h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 12px 0;
+      color: #8b5cf6;
+    }
+
+    .plan-tasks {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .plan-tasks li {
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .plan-tasks li:before {
+      content: "•";
+      color: #8b5cf6;
+      font-weight: bold;
+    }
     gap: 12px;
   }
-  
+
   .chat-input {
     width: 100%;
   }
-  
+
   .send-btn {
     width: 100%;
   }
-  
+
   .quick-prompts {
     grid-template-columns: 1fr;
   }

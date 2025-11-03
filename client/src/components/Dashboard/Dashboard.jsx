@@ -152,21 +152,33 @@ const Dashboard = () => {
             <span className="stat-label">Tasks Completed</span>
             <span className="stat-icon">✅</span>
           </div>
-          <div className="stat-value">
-            {stats.completedTasks}/{stats.totalTasks}
-          </div>
-          <div className="stat-progress">
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${
-                    (stats.completedTasks / Math.max(stats.totalTasks, 1)) * 100
-                  }%`,
-                }}
-              ></div>
+          {stats.totalTasks === 0 ? (
+            <div className="empty-stat">
+              <div className="stat-value">No tasks yet</div>
+              <p className="stat-message">
+                Create your first task to get started!
+              </p>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="stat-value">
+                {stats.completedTasks}/{stats.totalTasks}
+              </div>
+              <div className="stat-progress">
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${
+                        (stats.completedTasks / Math.max(stats.totalTasks, 1)) *
+                        100
+                      }%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="stat-card card">
@@ -174,7 +186,14 @@ const Dashboard = () => {
             <span className="stat-label">Productivity Score</span>
             <span className="stat-icon">📊</span>
           </div>
-          <div className="stat-value">{stats.productivityScore}%</div>
+          {stats.productivityScore === 0 ? (
+            <div className="empty-stat">
+              <div className="stat-value">Let's begin!</div>
+              <p className="stat-message">Complete tasks to build your score</p>
+            </div>
+          ) : (
+            <div className="stat-value">{stats.productivityScore}%</div>
+          )}
         </div>
 
         <div className="stat-card card">
@@ -182,7 +201,16 @@ const Dashboard = () => {
             <span className="stat-label">Active Plans</span>
             <span className="stat-icon">🎯</span>
           </div>
-          <div className="stat-value">{stats.activePlans}</div>
+          {stats.activePlans === 0 ? (
+            <div className="empty-stat">
+              <div className="stat-value">Start planning</div>
+              <p className="stat-message">
+                Create a plan with our AI assistant
+              </p>
+            </div>
+          ) : (
+            <div className="stat-value">{stats.activePlans}</div>
+          )}
         </div>
       </div>
 

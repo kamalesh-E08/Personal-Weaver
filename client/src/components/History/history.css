@@ -277,3 +277,35 @@
     width: 100%;
   }
 }
+
+.schedule-list {
+  margin-top: 8px;
+  padding-left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedule-item {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: #e6e6e6;
+}
+
+.schedule-time {
+  font-weight: bold;
+  color: #b3b3ff;
+  margin-bottom: 4px;
+}
+
+.schedule-activity strong {
+  color: #ffffff;
+  display: block;
+}
+
+.schedule-activity p {
+  margin: 4px 0 0 0;
+  color: #cccccc;
+  font-size: 0.9rem;
+}

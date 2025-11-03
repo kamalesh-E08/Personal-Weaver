@@ -129,7 +129,6 @@ router.get("/stats", auth, async (req, res) => {
     const Task = require("../models/Task");
     const Plan = require("../models/Plan");
     const ChatHistory = require("../models/ChatHistory");
-    console.log("Fetching stats for user:", req.userId);
 
     const [totalTasks, completedTasks, totalPlans, activePlans, totalChats] =
       await Promise.all([

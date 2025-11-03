@@ -28,23 +28,32 @@ export const AuthProvider = ({ children }) => {
   };
 
   const setAuthHeader = (token) => {
-    // Token is now handled by the api interceptor
+    // Ensure axios instance has the Authorization header for immediate requests.
+    // The request interceptor also reads from localStorage, but setting the
+    // default header here makes the token effective immediately after login/register
+    // without waiting for the next request cycle.
+    try {
+      if (token) {
+        // store token if not already stored by caller
+        if (localStorage.getItem("token") !== token) {
+          localStorage.setItem("token", token);
+        }
+        // set default header on axios instance
+        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      } else {
+        // remove header when token is null/undefined
+        if (api.defaults.headers && api.defaults.headers.common) {
+          delete api.defaults.headers.common["Authorization"];
+        }
+        localStorage.removeItem("token");
+      }
+    } catch (err) {
+      console.warn("Unable to set auth header:", err);
+    }
   };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const demoUserJson = localStorage.getItem("demoUser");
-    if (demoUserJson) {
-      // Demo mode: restore user without hitting backend
-      try {
-        const parsedDemoUser = JSON.parse(demoUserJson);
-        setUser(parsedDemoUser);
-      } catch {
-        // No-op for demo mode fallback
-      }
-      setLoading(false);
-      return;
-    }
     if (token) {
       setAuthHeader(token);
       fetchUser();
@@ -52,7 +61,6 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
-
 
   const login = async (email, password) => {
     try {
@@ -65,25 +73,6 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
-      // Demo mode fallback: authenticate using stored demo credentials
-      try {
-        const demoCredsJson = localStorage.getItem("demoCredentials");
-        const demoUserJson = localStorage.getItem("demoUser");
-        if (demoCredsJson && demoUserJson) {
-          const demoCreds = JSON.parse(demoCredsJson);
-          const demoUser = JSON.parse(demoUserJson);
-          if (demoCreds.email === email && demoCreds.password === password) {
-            const token = "demo-token";
-            localStorage.setItem("token", token);
-            setAuthHeader(token);
-            setUser(demoUser);
-            return { success: true, message: "Logged in (demo mode)" };
-          }
-        }
-      } catch {
-        // Intentionally left empty for demo mode fallback
-        return;
-      }
       return {
         success: false,
         message: error.response?.data?.message || "Login failed",
@@ -107,25 +96,6 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error("Error registering user:", error);
-      // Demo mode fallback: allow local registration when backend is unavailable
-      // const demoUser = {
-      //   id: "demo",
-      //   name,
-      //   email,
-      // };
-      // try {
-      //   localStorage.setItem("demoUser", JSON.stringify(demoUser));
-      //   localStorage.setItem(
-      //     "demoCredentials",
-      //     JSON.stringify({ email, password })
-      //   );
-      // } catch {
-      //   // Intentionally left empty for demo mode fallback
-      // }
-      // const token = "demo-token";
-      // localStorage.setItem("token", token);
-      // setAuthHeader(token);
-      // setUser(demoUser);
       return {
         success: false,
         message: error.response?.data?.message || "Registration failed",
@@ -134,8 +104,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-
+    // Clear stored token and axios header
+    setAuthHeader(null);
     setUser(null);
   };
 

@@ -6,7 +6,6 @@
 
 .tasks-content {
   flex: 1;
-
 }
 
 .tasks-container {
@@ -188,6 +187,14 @@
   margin-right: 4px;
 }
 
+.plan-badge {
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
 .empty-state {
   text-align: center;
   padding: 64px 32px;
@@ -212,6 +219,55 @@
   max-width: 500px;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Unassigned Tasks Alert */
+.unassigned-tasks-alert {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.unassigned-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.unassigned-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #8b5cf6;
+}
+
+.unassigned-tasks-list {
+  margin: 12px 0;
+}
+
+.unassigned-task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.unassigned-task-item:last-child {
+  border-bottom: none;
+}
+
+.task-assign-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.unassigned-task-title {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
 }
 
 /* Mobile Responsive */

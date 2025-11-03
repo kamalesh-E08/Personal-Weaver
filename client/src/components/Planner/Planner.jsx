@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import axios from "axios";
 import "./Planner.css";
 import api from "../../utils/api";
 
 const Planner = () => {
-  const { user } = useAuth();
+  const auth = useAuth();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showAddTaskForm, setShowAddTaskForm] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
   const [newPlan, setNewPlan] = useState({
     title: "",
     description: "",
     goals: [""],
     timeline: "",
     priority: "medium",
+  });
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    category: "Work",
+    priority: "medium",
+    estimatedTime: "1 hour",
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
   });
 
   useEffect(() => {
@@ -24,7 +35,31 @@ const Planner = () => {
   const fetchPlans = async () => {
     try {
       const response = await api.get("/plans");
-      setPlans(response.data);
+      // API returns an object with a `plans` array and `metadata`.
+      // Normalize so we always store an array in state.
+      const payload = response.data;
+      const plansData = Array.isArray(payload) ? payload : payload.plans || [];
+
+      // Fetch tasks for each plan
+      const plansWithTasks = await Promise.all(
+        plansData.map(async (plan) => {
+          try {
+            const tasksResponse = await api.get(`/tasks?planId=${plan._id}`);
+            return {
+              ...plan,
+              tasks: tasksResponse.data || [],
+            };
+          } catch (error) {
+            console.error(`Error fetching tasks for plan ${plan._id}:`, error);
+            return {
+              ...plan,
+              tasks: [],
+            };
+          }
+        })
+      );
+
+      setPlans(plansWithTasks);
     } catch (error) {
       console.error("Error fetching plans:", error);
     } finally {
@@ -89,6 +124,49 @@ const Planner = () => {
       // Fallback: remove locally
       setPlans(plans.filter((plan) => plan._id !== planId));
     }
+  };
+
+  const handleCreateTask = async (e) => {
+    e.preventDefault();
+    try {
+      const taskData = {
+        ...newTask,
+        planId: selectedPlan._id,
+      };
+
+      const response = await api.post("/tasks", taskData);
+      const createdTask = response.data;
+
+      // Update local state with the new task
+      setPlans(
+        plans.map((plan) =>
+          plan._id === selectedPlan._id
+            ? { ...plan, tasks: [...(plan.tasks || []), createdTask] }
+            : plan
+        )
+      );
+
+      // Reset form and close modal
+      setNewTask({
+        title: "",
+        description: "",
+        category: "Work",
+        priority: "medium",
+        estimatedTime: "1 hour",
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+      });
+      setShowAddTaskForm(false);
+      setSelectedPlan(null);
+    } catch (error) {
+      console.error("Error creating task:", error);
+    }
+  };
+
+  const openAddTaskForm = (plan) => {
+    setSelectedPlan(plan);
+    setShowAddTaskForm(true);
   };
 
   const addGoal = () => {
@@ -211,6 +289,8 @@ const Planner = () => {
                   }
                 >
                   <option value="">Select Timeline</option>
+                  <option value="1 day">1 Day</option>
+                  <option value="3 days">3 Days</option>
                   <option value="1 week">1 Week</option>
                   <option value="1 month">1 Month</option>
                   <option value="3 months">3 Months</option>
@@ -253,8 +333,17 @@ const Planner = () => {
       <div className="plans-grid">
         {plans.length === 0 ? (
           <div className="no-plans">
-            <h3>No plans yet</h3>
-            <p>Create your first strategic plan to get started!</p>
+            <div className="no-plans-icon">📋</div>
+            <h3>No Plans Yet</h3>
+            <p>
+              Start organizing your work by creating your first strategic plan!
+            </p>
+            <button
+              className="create-plan-btn"
+              onClick={() => setShowCreateForm(true)}
+            >
+              + Create Your First Plan
+            </button>
           </div>
         ) : (
           Array.isArray(plans) &&
@@ -286,6 +375,66 @@ const Planner = () => {
                 </ul>
               </div>
 
+              <div className="plan-tasks">
+                <h4>Tasks:</h4>
+                {!plan.tasks || plan.tasks.length === 0 ? (
+                  <div className="no-tasks">
+                    <p>No tasks added to this plan yet</p>
+                    <button
+                      className="add-task-btn"
+                      onClick={() => openAddTaskForm(plan)}
+                    >
+                      + Add Your First Task
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <ul className="tasks-list">
+                      {plan.tasks.map((task) => (
+                        <li
+                          key={task._id}
+                          className={`task-item priority-${task.priority}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={task.completed}
+                            onChange={async () => {
+                              try {
+                                await api.put(`/tasks/${task._id}`, {
+                                  completed: !task.completed,
+                                });
+                                fetchPlans();
+                              } catch (error) {
+                                console.error("Error updating task:", error);
+                              }
+                            }}
+                          />
+                          <span className={task.completed ? "completed" : ""}>
+                            {task.title}
+                          </span>
+                          <div className="task-details">
+                            <span
+                              className={`priority priority-${task.priority}`}
+                            >
+                              {task.priority}
+                            </span>
+                            <span className="due-date">
+                              Due: {new Date(task.dueDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      className="add-task-btn"
+                      onClick={() => openAddTaskForm(plan)}
+                    >
+                      + Add Another Task
+                    </button>
+                  </>
+                )}
+              </div>
+
               <div className="plan-meta">
                 <span className="timeline">Timeline: {plan.timeline}</span>
                 <span className={`priority priority-${plan.priority}`}>
@@ -303,6 +452,104 @@ const Planner = () => {
           ))
         )}
       </div>
+
+      {/* Add Task Modal */}
+      {showAddTaskForm && selectedPlan && (
+        <div className="modal-overlay">
+          <div className="create-task-modal">
+            <div className="modal-header">
+              <h2>Add Task to Plan: {selectedPlan.title}</h2>
+              <button
+                className="close-btn"
+                onClick={() => {
+                  setShowAddTaskForm(false);
+                  setSelectedPlan(null);
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleCreateTask} className="create-task-form">
+              <div className="form-group">
+                <label>Task Title</label>
+                <input
+                  type="text"
+                  value={newTask.title}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, title: e.target.value })
+                  }
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Description</label>
+                <textarea
+                  value={newTask.description}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, description: e.target.value })
+                  }
+                  rows="3"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Priority</label>
+                <select
+                  value={newTask.priority}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, priority: e.target.value })
+                  }
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Due Date</label>
+                <input
+                  type="date"
+                  value={newTask.dueDate}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, dueDate: e.target.value })
+                  }
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Estimated Time</label>
+                <input
+                  type="text"
+                  value={newTask.estimatedTime}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, estimatedTime: e.target.value })
+                  }
+                  placeholder="e.g. 1 hour"
+                />
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="submit-btn">
+                  Add Task
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddTaskForm(false);
+                    setSelectedPlan(null);
+                  }}
+                  className="cancel-btn"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

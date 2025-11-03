@@ -1,10 +1,13 @@
 const express = require("express");
 const ChatHistory = require("../models/ChatHistory");
 const auth = require("../middleware/auth");
+const { handleChat } = require("../services/geminiApi");
 
 const router = express.Router();
+// Store active chat sessions
+const activeSessions = new Map();
 
-// Get chat history
+// Get chat history (returns all sessions grouped by session)
 router.get("/history", auth, async (req, res) => {
   try {
     const { category } = req.query; // Extract category from query parameters
@@ -24,55 +27,87 @@ router.get("/history", auth, async (req, res) => {
   }
 });
 
+// Get a single chat session by ID
+router.get("/session/:sessionId", auth, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const chatSession = await ChatHistory.findOne({
+      _id: sessionId,
+      userId: req.userId,
+    });
+
+    if (!chatSession) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    res.json(chatSession);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 // Send message to AI
 router.post("/message", auth, async (req, res) => {
   try {
     const { message, sessionId } = req.body;
-
-    // Mock AI response - in real app, this would call an AI service like OpenAI
-    const aiResponses = [
-      "I'd be happy to help you with that! Let me break this down into actionable steps for you.",
-      "That's a great question! Based on your productivity patterns, I recommend focusing on high-priority tasks first.",
-      "I can help you create a structured plan for this. Let's start by identifying your main objectives.",
-      "Here are some personalized suggestions based on your goals and current progress.",
-      "I understand what you're looking for. Let me provide you with some strategic recommendations.",
-      "That's an excellent goal! I can help you create a step-by-step plan to achieve it effectively.",
-    ];
-
-    const aiResponse =
-      aiResponses[Math.floor(Math.random() * aiResponses.length)];
-
-    // Find or create chat session
+    console.log("message", message);
+    // Get or create chat session
     let chatSession = sessionId
-      ? await ChatHistory.findById(sessionId)
-      : new ChatHistory({
-          userId: req.userId,
-          sessionTitle: message.substring(0, 50) + "...",
-          messages: [],
-        });
+      ? await ChatHistory.findOne({ _id: sessionId, userId: req.userId })
+      : null;
 
-    // Add user message
+    // If sessionId was provided but session not found, or invalid user, create new
+    if (sessionId && !chatSession) {
+      return res
+        .status(404)
+        .json({ message: "Session not found or access denied" });
+    }
+
+    // Create new session if none exists
+    if (!chatSession) {
+      chatSession = new ChatHistory({
+        userId: req.userId,
+        sessionTitle: message.substring(0, 50) + "...",
+        messages: [],
+      });
+    }
+
+    // Get or create Gemini chat instance
+    let geminiChat = activeSessions.get(chatSession._id?.toString());
+
+    // Get response from Gemini
+    const result = await handleChat(message, geminiChat);
+    geminiChat = result.chat; // Store updated chat instance
+    activeSessions.set(chatSession._id?.toString(), geminiChat);
+    console.log("result", result);
+    // Add user message to history
     chatSession.messages.push({
       role: "user",
       content: message,
       timestamp: new Date(),
     });
 
-    // Add AI response
+    // Add AI response to history
+    const responseContent =
+      result.type === "plan" ? JSON.stringify(result.data) : result.message;
+
     chatSession.messages.push({
       role: "assistant",
-      content: aiResponse,
+      content: responseContent,
       timestamp: new Date(),
+      type: result.type,
     });
 
     await chatSession.save();
 
     res.json({
       sessionId: chatSession._id,
-      response: aiResponse,
+      response: result.type === "plan" ? result.data : result.message,
+      type: result.type,
       timestamp: new Date(),
     });
   } catch (error) {
+    console.error("Chat error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });

@@ -30,8 +30,6 @@ router.post("/register", async (req, res) => {
     if (!email || !password || !name) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-
-
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -63,7 +61,7 @@ router.post("/register", async (req, res) => {
       token,
       user: formatUserResponse(user),
     });
-    console.log(req.body);
+    // console.log(req.body);
   } catch (error) {
     handleError(res, error);
   }

@@ -29,4 +29,22 @@ api.interceptors.response.use(
   }
 );
 
+// Chat API functions
+const chatApi = {
+  // Send a message to the AI
+  sendMessage: async (message, sessionId = null) => {
+    const response = await api.post("/chat/message", { message, sessionId });
+    return response.data;
+  },
+
+  // Get chat history
+  getChatHistory: async (category = null) => {
+    const params = category ? { category } : {};
+    const response = await api.get("/chat/history", { params });
+    return response.data;
+  },
+};
+
+// Export both the axios instance and the chat API functions
+export { chatApi };
 export default api;
