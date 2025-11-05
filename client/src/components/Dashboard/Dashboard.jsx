@@ -57,7 +57,7 @@ const Dashboard = () => {
         "/tasks?limit=4&filter=pending&sortBy=priority:-1"
       );
       console.log("Tasks received:", tasksData);
-      setRecentTasks((prevTasks) => {
+      setRecentTasks((...prevTasks) => {
         console.log("Updating tasks from:", prevTasks, "to:", tasksData);
         return Array.isArray(tasksData) ? tasksData : [];
       });
@@ -69,7 +69,7 @@ const Dashboard = () => {
       setRecentPlans((prevPlans) => {
         console.log(
           "Updating plans from:",
-          prevPlans,
+          ...prevPlans,
           "to:",
           plansData?.plans || []
         );
@@ -289,9 +289,7 @@ const Dashboard = () => {
           <div className="section-header">
             <div>
               <h3 className="section-title">Active Plans</h3>
-              <p className="section-subtitle">
-                Your AI-powered strategic plans
-              </p>
+              <p className="section-subtitle">Your ongoing strategic plans</p>
             </div>
             <button
               className="btn btn-secondary btn-sm"

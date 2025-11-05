@@ -20,10 +20,42 @@ const History = () => {
       setLoading(true);
       setError(null);
 
-      // api is an axios instance; response data is in res.data
-      const res = await api.get("/history");
-      const data = res.data;
-      setHistoryItems(Array.isArray(data) ? data : []);
+      const [chatRes, plansRes, tasksRes] = await Promise.all([
+        api.get("/history"),
+        api.get("/plans"),
+        api.get("/tasks"),  
+      ]);
+
+      const chatHistory = Array.isArray(chatRes.data)
+        ? chatRes.data.map((item) => ({
+            ...item,
+            type: "chat",
+            title: item.sessionTitle || "Chat Session",
+          }))
+        : [];
+      const plans = Array.isArray(plansRes.data)
+        ? plansRes.data.map((item) => ({
+            ...item,
+            type: "plan",
+            timestamp: item.createdAt,
+          }))
+        : [];
+      const tasks = Array.isArray(tasksRes.data)
+        ? tasksRes.data.map((item) => ({
+            ...item,
+            type: "tasks",
+            timestamp: item.createdAt,
+          }))
+        : [];
+
+      const combinedHistory = [...chatHistory, ...plans, ...tasks];
+
+      // Sort by timestamp (most recent first)
+      combinedHistory.sort(
+        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+      );
+
+      setHistoryItems(combinedHistory);
     } catch (err) {
       console.error("Error fetching history:", err);
       setError("Failed to fetch history. Please try again later.");
@@ -128,7 +160,7 @@ const History = () => {
       <div className="stats-grid">
         <div className="stat-card card">
           <div className="stat-header">
-            <span className="stat-label">Total Sessions</span>
+            <span className="stat-label">Total Chats</span>
             <span className="stat-icon">📜</span>
           </div>
           <div className="stat-value">{stats.totalSessions}</div>

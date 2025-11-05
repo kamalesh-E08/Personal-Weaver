@@ -10,6 +10,9 @@ const Profile = () => {
   // Start empty and load real data from the server instead of showing dummy values
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  
+  const [originalProfile, setOriginalProfile] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
@@ -26,9 +29,6 @@ const Profile = () => {
     totalSessions: 0,
     plansCreated: 0,
     tasksCompleted: 0,
-    productivityScore: 0,
-    streakDays: 0,
-    timesSaved: "0 hours",
   });
 
   const achievements = [
@@ -93,9 +93,6 @@ const Profile = () => {
     setIsEditing(!isEditing);
   };
 
-  const [originalProfile, setOriginalProfile] = useState(null);
-  const [saving, setSaving] = useState(false);
-
   const fetchProfile = async () => {
     setProfileLoading(true);
     try {
@@ -155,7 +152,10 @@ const Profile = () => {
   const fetchStats = async () => {
     try {
       const res = await api.get("/users/stats");
-      setStats((s) => ({ ...s, ...res.data }));
+       const data = res.data;
+      setStats({totalSessions: data.totalChats,
+      plansCreated: data.totalPlans,
+      tasksCompleted: data.completedTasks,});
     } catch (err) {
       console.error("Failed to fetch stats:", err);
     }

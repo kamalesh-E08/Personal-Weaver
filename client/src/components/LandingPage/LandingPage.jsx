@@ -77,14 +77,6 @@ const LandingPage = () => {
             <span className="brand-icon">🧠</span>
             <span className="brand-text gradient-text-primary">Personal Weaver</span>
           </div>
-          <div className="nav-links">
-            <button 
-              className="btn btn-primary"
-              onClick={() => setIsLogin(!isLogin)}
-            >
-              {isLogin ? 'Sign Up' : 'Login'}
-            </button>
-          </div>
         </div>
       </nav>
 

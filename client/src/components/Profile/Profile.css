@@ -206,6 +206,10 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  color: white;
+}
+.form-group label{
+  color: white;
 }
 
 .form-label {
@@ -441,3 +445,4 @@
     grid-template-columns: 1fr;
   }
 }
+

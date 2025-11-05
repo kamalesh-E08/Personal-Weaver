@@ -204,8 +204,8 @@ const Planner = () => {
   return (
     <div className="planner-container">
       <div className="planner-header">
-        <h1>AI Planner</h1>
-        <p>Create and manage your strategic plans with AI assistance</p>
+        <h1>Manual Planner</h1>
+        <p>Create and manage your strategic plans manually</p>
         <button
           className="create-plan-btn"
           onClick={() => setShowCreateForm(true)}
