@@ -10,6 +10,7 @@ const History = () => {
   const [dateRange, setDateRange] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("plans"); // for tab control
 
   useEffect(() => {
     fetchHistory();
@@ -20,11 +21,13 @@ const History = () => {
       setLoading(true);
       setError(null);
 
-      const [chatRes, plansRes, tasksRes] = await Promise.all([
-        api.get("/history"),
-        api.get("/plans"),
-        api.get("/tasks"),  
-      ]);
+      const res = await fetch("/history", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
       const chatHistory = Array.isArray(chatRes.data)
         ? chatRes.data.map((item) => ({
@@ -140,216 +143,221 @@ const History = () => {
   };
 
   return (
-    <div className="history-container">
-      {/* Header */}
-      <div className="history-header">
-        <div className="header-content">
-          <h1 className="history-title gradient-text">Activity History</h1>
-          <p className="history-subtitle">
-            Track your AI interactions and productivity journey
-          </p>
+    <Layout>
+      <div className="history-container">
+        {/* === TOP NAV TABS === */}
+        <div className="top-tabs">
+          <button
+            className={`tab ${activeTab === "plans" ? "active-tab" : ""}`}
+            onClick={() => setActiveTab("plans")}
+          >
+            Active Plans
+          </button>
+          <button
+            className={`tab ${activeTab === "history" ? "active-tab" : ""}`}
+            onClick={() => setActiveTab("history")}
+          >
+            History
+          </button>
         </div>
 
-        <button className="btn btn-outline" onClick={fetchHistory}>
-          <span className="btn-icon">📥</span>
-          Refresh
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="stats-grid">
-        <div className="stat-card card">
-          <div className="stat-header">
-            <span className="stat-label">Total Chats</span>
-            <span className="stat-icon">📜</span>
+        {/* === HEADER === */}
+        <div className="history-header">
+          <div className="header-content">
+            <h1 className="history-title gradient-text">
+              {activeTab === "plans" ? "Active Plans" : "History"}
+            </h1>
+            <p className="history-subtitle">
+              {activeTab === "plans"
+                ? "View your current active strategic AI plans and goals."
+                : "Track your AI interactions and productivity journey"}
+            </p>
           </div>
-          <div className="stat-value">{stats.totalSessions}</div>
-          <div className="stat-change">All interactions</div>
+
+          <button className="btn btn-outline" onClick={fetchHistory}>
+            <span className="btn-icon">📥</span>
+            Refresh
+          </button>
         </div>
 
-        <div className="stat-card card">
-          <div className="stat-header">
-            <span className="stat-label">Chat Sessions</span>
-            <span className="stat-icon">💬</span>
+        {/* === ACTIVE PLANS SECTION === */}
+        {activeTab === "plans" && (
+          <div className="empty-state card">
+            <div className="empty-icon">🧠</div>
+            <h3 className="empty-title">No Active Plans Yet</h3>
+            <p className="empty-description">
+              Start creating strategic AI plans to see them appear here.
+            </p>
           </div>
-          <div className="stat-value">{stats.chatSessions}</div>
-          <div className="stat-change">AI conversations</div>
-        </div>
+        )}
 
-        <div className="stat-card card">
-          <div className="stat-header">
-            <span className="stat-label">Plans Created</span>
-            <span className="stat-icon">🧠</span>
-          </div>
-          <div className="stat-value">{stats.plansCreated}</div>
-          <div className="stat-change">Strategic plans</div>
-        </div>
-
-        <div className="stat-card card">
-          <div className="stat-header">
-            <span className="stat-label">Tasks Generated</span>
-            <span className="stat-icon">✅</span>
-          </div>
-          <div className="stat-value">{stats.tasksGenerated}</div>
-          <div className="stat-change">AI-generated tasks</div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="filters-section">
-        <div className="search-container">
-          <input
-            type="text"
-            placeholder="Search history..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input input"
-          />
-          <span className="search-icon">🔍</span>
-        </div>
-
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className="select"
-        >
-          <option value="all">All Types</option>
-          <option value="chat">Chat Sessions</option>
-          <option value="plan">Plans</option>
-          <option value="tasks">Tasks</option>
-        </select>
-
-        <select
-          value={dateRange}
-          onChange={(e) => setDateRange(e.target.value)}
-          className="select"
-        >
-          <option value="all">All Time</option>
-          <option value="today">Today</option>
-          <option value="week">This Week</option>
-          <option value="month">This Month</option>
-        </select>
-      </div>
-
-      {/* Loading State */}
-      {loading && (
-        <div className="empty-state card">
-          <div className="empty-icon">⏳</div>
-          <h3 className="empty-title">Loading history...</h3>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="empty-state card">
-          <div className="empty-icon">⚠️</div>
-          <h3 className="empty-title">Error</h3>
-          <p className="empty-description">{error}</p>
-        </div>
-      )}
-
-      {/* History List */}
-      {!loading && !error && filteredItems.length > 0 && (
-        <div className="history-list">
-          {filteredItems.map((item) => (
-            <div key={item._id} className="history-item card">
-              <div className="item-content">
-                <div className="item-icon">{getTypeIcon(item.type)}</div>
-
-                <div className="item-details">
-                  <div className="item-header">
-                    <h3 className="item-title">{item.title}</h3>
-                    <div className="item-badges">
-                      <span className={`badge ${getTypeColor(item.type)}`}>
-                        {item.type?.charAt(0).toUpperCase() +
-                          item.type?.slice(1)}
-                      </span>
-                      <span className={`badge ${getStatusColor(item.status)}`}>
-                        {item.status?.charAt(0).toUpperCase() +
-                          item.status?.slice(1)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="item-description">
-                    {(() => {
-                      try {
-                        const parsed = JSON.parse(item.description);
-
-                        if (parsed.title) {
-                          return (
-                            <div>
-                              <h4>{parsed.title}</h4>
-                              {parsed.schedule ? (
-                                <div className="schedule-list">
-                                  {parsed.schedule.map((s, i) => (
-                                    <div key={i} className="schedule-item">
-                                      <div className="schedule-time">
-                                        🕒 {s.time}
-                                      </div>
-                                      <div className="schedule-activity">
-                                        <strong>{s.activity}</strong>
-                                        {s.details && <p>{s.details}</p>}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <pre>{JSON.stringify(parsed, null, 2)}</pre>
-                              )}
-                            </div>
-                          );
-                        } else {
-                          return <pre>{JSON.stringify(parsed, null, 2)}</pre>;
-                        }
-                      } catch {
-                        // not JSON, just a normal string
-                        return <p>{item.description}</p>;
-                      }
-                    })()}
-                  </div>
-
-                  <div className="item-meta">
-                    <div className="meta-item">
-                      <span className="meta-icon">📅</span>
-                      <span>
-                        {item.timestamp
-                          ? new Date(item.timestamp).toLocaleDateString()
-                          : "N/A"}
-                      </span>
-                    </div>
-                    <div className="meta-item">
-                      <span className="meta-icon">⏱️</span>
-                      <span>{item.duration || "—"}</span>
-                    </div>
-                    <span className={`badge ${getTypeColor(item.category)}`}>
-                      {item.category || "General"}
-                    </span>
-                  </div>
+        {/* === HISTORY SECTION === */}
+        {activeTab === "history" && (
+          <>
+            {/* Stats Cards */}
+            <div className="stats-grid">
+              <div className="stat-card card">
+                <div className="stat-header">
+                  <span className="stat-label">Total Sessions</span>
+                  <span className="stat-icon">📜</span>
                 </div>
+                <div className="stat-value">{stats.totalSessions}</div>
+                <div className="stat-change">All interactions</div>
+              </div>
 
-                <button className="btn btn-outline btn-sm">
-                  <span className="btn-icon">👁️</span>
-                  View
-                </button>
+              <div className="stat-card card">
+                <div className="stat-header">
+                  <span className="stat-label">Chat Sessions</span>
+                  <span className="stat-icon">💬</span>
+                </div>
+                <div className="stat-value">{stats.chatSessions}</div>
+                <div className="stat-change">AI conversations</div>
+              </div>
+
+              <div className="stat-card card">
+                <div className="stat-header">
+                  <span className="stat-label">Plans Created</span>
+                  <span className="stat-icon">🧠</span>
+                </div>
+                <div className="stat-value">{stats.plansCreated}</div>
+                <div className="stat-change">Strategic plans</div>
+              </div>
+
+              <div className="stat-card card">
+                <div className="stat-header">
+                  <span className="stat-label">Tasks Generated</span>
+                  <span className="stat-icon">✅</span>
+                </div>
+                <div className="stat-value">{stats.tasksGenerated}</div>
+                <div className="stat-change">AI-generated tasks</div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
 
-      {/* Empty State */}
-      {!loading && !error && filteredItems.length === 0 && (
-        <div className="empty-state card">
-          <div className="empty-icon">📜</div>
-          <h3 className="empty-title">No history found</h3>
-          <p className="empty-description">
-            {searchTerm || filterType !== "all" || dateRange !== "all"
-              ? "No items match your current filters. Try adjusting your search criteria."
-              : "Start using Personal Weaver AI to see your activity history here."}
-          </p>
-        </div>
-      )}
-    </div>
+            {/* Filters */}
+            <div className="filters-section">
+              <div className="search-container">
+                <input
+                  type="text"
+                  placeholder="Search history..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input input"
+                />
+                <span className="search-icon">🔍</span>
+              </div>
+
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="select"
+              >
+                <option value="all">All Types</option>
+                <option value="chat">Chat Sessions</option>
+                <option value="plan">Plans</option>
+                <option value="tasks">Tasks</option>
+              </select>
+
+              <select
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="select"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+              </select>
+            </div>
+
+            {/* Loading State */}
+            {loading && (
+              <div className="empty-state card">
+                <div className="empty-icon">⏳</div>
+                <h3 className="empty-title">Loading history...</h3>
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+              <div className="empty-state card">
+                <div className="empty-icon">⚠️</div>
+                <h3 className="empty-title">Error</h3>
+                <p className="empty-description">{error}</p>
+              </div>
+            )}
+
+            {/* History List */}
+            {!loading && !error && filteredItems.length > 0 && (
+              <div className="history-list">
+                {filteredItems.map((item) => (
+                  <div key={item._id} className="history-item card">
+                    <div className="item-content">
+                      <div className="item-icon">{getTypeIcon(item.type)}</div>
+
+                      <div className="item-details">
+                        <div className="item-header">
+                          <h3 className="item-title">{item.title}</h3>
+                          <div className="item-badges">
+                            <span className={`badge ${getTypeColor(item.type)}`}>
+                              {item.type?.charAt(0).toUpperCase() +
+                                item.type?.slice(1)}
+                            </span>
+                            <span
+                              className={`badge ${getStatusColor(item.status)}`}
+                            >
+                              {item.status?.charAt(0).toUpperCase() +
+                                item.status?.slice(1)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="item-description">{item.description}</p>
+
+                        <div className="item-meta">
+                          <div className="meta-item">
+                            <span className="meta-icon">📅</span>
+                            <span>
+                              {item.timestamp
+                                ? new Date(item.timestamp).toLocaleDateString()
+                                : "N/A"}
+                            </span>
+                          </div>
+                          <div className="meta-item">
+                            <span className="meta-icon">⏱️</span>
+                            <span>{item.duration || "—"}</span>
+                          </div>
+                          <span className={`badge ${getTypeColor(item.category)}`}>
+                            {item.category || "General"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button className="btn btn-outline btn-sm">
+                        <span className="btn-icon">👁️</span>
+                        View
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loading && !error && filteredItems.length === 0 && (
+              <div className="empty-state card">
+                <div className="empty-icon">📜</div>
+                <h3 className="empty-title">No history found</h3>
+                <p className="empty-description">
+                  {searchTerm || filterType !== "all" || dateRange !== "all"
+                    ? "No items match your current filters. Try adjusting your search criteria."
+                    : "Start using Personal Weaver AI to see your activity history here."}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </Layout>
   );
 };
 

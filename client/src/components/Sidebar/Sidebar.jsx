@@ -20,7 +20,7 @@ const Sidebar = ({ isCollapsed: controlledCollapsed, toggleSidebar }) => {
     { path: "/chat", icon: "💬", label: "AI Assistant" },
     { path: "/planner", icon: "🧠", label: "Plan Maker" },
     { path: "/tasks", icon: "✅", label: "Tasks" },
-    { path: "/history", icon: "📜", label: "History" },
+    { path: "/history", icon: "📜", label: "Plans" },
     { path: "/profile", icon: "👤", label: "Profile" },
   ];
 

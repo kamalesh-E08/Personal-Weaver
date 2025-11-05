@@ -6,7 +6,6 @@
 
 .history-content {
   flex: 1;
-
 }
 
 .history-container {
@@ -17,6 +16,40 @@
   margin: 0 auto;
   width: 100%;
   padding: 32px;
+}
+
+/* === Top Tab Bar === */
+.top-tabs {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.8rem 0;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.active-tab {
+  background: #581c87;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(88, 28, 135, 0.6);
 }
 
 .history-header {
@@ -30,6 +63,7 @@
   font-size: 36px;
   font-weight: 700;
   margin-bottom: 8px;
+  color: white;
 }
 
 .history-subtitle {
@@ -223,7 +257,7 @@
   margin: 0 auto;
 }
 
-/* Mobile Responsive */
+/* === Responsive Styles === */
 @media (max-width: 1024px) {
   .history-content {
     margin-left: 0;
@@ -276,36 +310,4 @@
   .filter-group {
     width: 100%;
   }
-}
-
-.schedule-list {
-  margin-top: 8px;
-  padding-left: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.schedule-item {
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  padding: 8px 12px;
-  color: #e6e6e6;
-}
-
-.schedule-time {
-  font-weight: bold;
-  color: #b3b3ff;
-  margin-bottom: 4px;
-}
-
-.schedule-activity strong {
-  color: #ffffff;
-  display: block;
-}
-
-.schedule-activity p {
-  margin: 4px 0 0 0;
-  color: #cccccc;
-  font-size: 0.9rem;
 }
