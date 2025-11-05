@@ -20,14 +20,11 @@ const History = () => {
     try {
       setLoading(true);
       setError(null);
-
-      const res = await fetch("/history", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const [chatRes, plansRes, tasksRes] = await Promise.all([
+        api.get("/history"),
+        api.get("/plans"),
+        api.get("/tasks"),  
+      ]);
 
       const chatHistory = Array.isArray(chatRes.data)
         ? chatRes.data.map((item) => ({
