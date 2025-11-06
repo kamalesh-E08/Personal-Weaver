@@ -347,109 +347,145 @@ const Planner = () => {
           </div>
         ) : (
           Array.isArray(plans) &&
-          plans.map((plan) => (
-            <div
-              key={plan._id}
-              className={`plan-card priority-${plan.priority}`}
-            >
-              <div className="plan-header">
-                <h3>{plan.title}</h3>
-                <div className="plan-actions">
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDeletePlan(plan._id)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-
-              <p className="plan-description">{plan.description}</p>
-
-              <div className="plan-goals">
-                <h4>Goals:</h4>
-                <ul>
-                  {plan.goals?.map((goal, index) => (
-                    <li key={index}>{goal}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="plan-tasks">
-                <h4>Tasks:</h4>
-                {!plan.tasks || plan.tasks.length === 0 ? (
-                  <div className="no-tasks">
-                    <p>No tasks added to this plan yet</p>
+          plans
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .map((plan) => (
+              <div
+                key={plan._id}
+                className={`plan-card priority-${plan.priority}`}
+              >
+                <div className="plan-header">
+                  <h3>{plan.title}</h3>
+                  <div className="plan-actions">
                     <button
-                      className="add-task-btn"
-                      onClick={() => openAddTaskForm(plan)}
+                      className="delete-btn"
+                      onClick={() => handleDeletePlan(plan._id)}
                     >
-                      + Add Your First Task
+                      Delete
                     </button>
                   </div>
-                ) : (
-                  <>
-                    <ul className="tasks-list">
-                      {plan.tasks.map((task) => (
-                        <li
-                          key={task._id}
-                          className={`task-item priority-${task.priority}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={task.completed}
-                            onChange={async () => {
-                              try {
-                                await api.put(`/tasks/${task._id}`, {
-                                  completed: !task.completed,
-                                });
-                                fetchPlans();
-                              } catch (error) {
-                                console.error("Error updating task:", error);
-                              }
-                            }}
-                          />
-                          <span className={task.completed ? "completed" : ""}>
-                            {task.title}
-                          </span>
-                          <div className="task-details">
-                            <span
-                              className={`priority priority-${task.priority}`}
-                            >
-                              {task.priority}
-                            </span>
-                            <span className="due-date">
-                              Due: {new Date(task.dueDate).toLocaleDateString()}
-                            </span>
+                </div>
+
+                {/* ✅ Handle JSON description (AI plans) */}
+                <div className="plan-description">
+                  {(() => {
+                    try {
+                      const parsed =
+                        typeof plan.description === "string"
+                          ? JSON.parse(plan.description)
+                          : plan.description;
+
+                      if (parsed && Array.isArray(parsed.schedule)) {
+                        return (
+                          <div className="ai-plan-checklist">
+                            <h4>{parsed.title || "AI Generated Plan"}</h4>
+                            <ul>
+                              {parsed.schedule.map((item, i) => (
+                                <li key={i}>
+                                  <strong>🕒 {item.time}</strong> —{" "}
+                                  {item.activity}
+                                  {item.details && (
+                                    <p className="details">{item.details}</p>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      className="add-task-btn"
-                      onClick={() => openAddTaskForm(plan)}
-                    >
-                      + Add Another Task
-                    </button>
-                  </>
-                )}
-              </div>
+                        );
+                      }
+                      // fallback for text
+                      return <p>{plan.description}</p>;
+                    } catch {
+                      return <p>{plan.description}</p>;
+                    }
+                  })()}
+                </div>
 
-              <div className="plan-meta">
-                <span className="timeline">Timeline: {plan.timeline}</span>
-                <span className={`priority priority-${plan.priority}`}>
-                  {plan.priority?.toUpperCase()}
-                </span>
-              </div>
+                <div className="plan-goals">
+                  <h4>Goals:</h4>
+                  <ul>
+                    {plan.goals?.map((goal, index) => (
+                      <li key={index}>{goal}</li>
+                    ))}
+                  </ul>
+                </div>
 
-              <div className="plan-date">
-                Created:{" "}
-                {plan.createdAt
-                  ? new Date(plan.createdAt).toLocaleDateString()
-                  : "Unknown"}
+                <div className="plan-tasks">
+                  <h4>Tasks:</h4>
+                  {!plan.tasks || plan.tasks.length === 0 ? (
+                    <div className="no-tasks">
+                      <p>No tasks added to this plan yet</p>
+                      <button
+                        className="add-task-btn"
+                        onClick={() => openAddTaskForm(plan)}
+                      >
+                        + Add Your First Task
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <ul className="tasks-list">
+                        {plan.tasks.map((task) => (
+                          <li
+                            key={task._id}
+                            className={`task-item priority-${task.priority}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={task.completed}
+                              onChange={async () => {
+                                try {
+                                  await api.put(`/tasks/${task._id}`, {
+                                    completed: !task.completed,
+                                  });
+                                  fetchPlans();
+                                } catch (error) {
+                                  console.error("Error updating task:", error);
+                                }
+                              }}
+                            />
+                            <span className={task.completed ? "completed" : ""}>
+                              {task.title}
+                            </span>
+                            <div className="task-details">
+                              <span
+                                className={`priority priority-${task.priority}`}
+                              >
+                                {task.priority}
+                              </span>
+                              <span className="due-date">
+                                Due:{" "}
+                                {new Date(task.dueDate).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        className="add-task-btn"
+                        onClick={() => openAddTaskForm(plan)}
+                      >
+                        + Add Another Task
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                <div className="plan-meta">
+                  <span className="timeline">Timeline: {plan.timeline}</span>
+                  <span className={`priority priority-${plan.priority}`}>
+                    {plan.priority?.toUpperCase()}
+                  </span>
+                </div>
+
+                <div className="plan-date">
+                  Created:{" "}
+                  {plan.createdAt
+                    ? new Date(plan.createdAt).toLocaleDateString()
+                    : "Unknown"}
+                </div>
               </div>
-            </div>
-          ))
+            ))
         )}
       </div>
 

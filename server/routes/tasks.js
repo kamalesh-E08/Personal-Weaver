@@ -7,8 +7,11 @@ const router = express.Router();
 
 router.get("/", auth, async (req, res) => {
   try {
-    const { filter, sortBy } = req.query;
+    const { filter, sortBy, planId} = req.query;
     let query = { userId: req.userId };
+    if (planId) {
+      query.plan = planId; // ✅ fetch only tasks belonging to this plan
+    }
     const { limit } = req.query;
 
     // Apply filters

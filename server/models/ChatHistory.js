@@ -1,40 +1,51 @@
 const mongoose = require('mongoose');
 
-const chatHistorySchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  messages: [{
-    role: {
-      type: String,
-      enum: ['user', 'assistant'],
-      required: true
+const chatHistorySchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    content: {
+    messages: [
+      {
+        role: {
+          type: String,
+          enum: ["user", "assistant"],
+          required: true,
+        },
+        content: {
+          type: String,
+          required: true,
+        },
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+        type: {
+          type: String,
+          enum: ["plan", "tasks", "chat", null],
+          default: null,
+        },
+      },
+    ],
+    sessionTitle: {
       type: String,
-      required: true
+      default: "Chat Session",
     },
-    timestamp: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  sessionTitle: {
-    type: String,
-    default: 'Chat Session'
+    category: {
+      type: String,
+      enum: ["plan", "tasks", "chat"],
+      default: "chat",
+    },
+    duration: {
+      type: String,
+      default: "0 minutes",
+    },
   },
-  category: {
-    type: String,
-    default: 'General'
-  },
-  duration: {
-    type: String,
-    default: '0 minutes'
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
 module.exports = mongoose.model('ChatHistory', chatHistorySchema);

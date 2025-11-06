@@ -540,3 +540,62 @@
     flex-direction: column;
   }
 }
+
+/* Glow highlight for latest plan */
+.latest-plan {
+  margin-bottom: 32px;
+  padding: 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid #00c3ff;
+  transition: 0.3s ease;
+}
+.latest-plan h3 {
+  color: #00c3ff;
+  margin-bottom: 8px;
+}
+.latest-plan p {
+  color: rgba(255, 255, 255, 0.8);
+}
+.glow-border {
+  box-shadow: 0 0 12px rgba(0, 195, 255, 0.4);
+}
+.progress-bar.large {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  margin: 10px 0;
+}
+.progress-bar.small {
+  height: 6px;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00c3ff, #8b5cf6);
+  border-radius: 6px;
+  transition: width 0.5s ease-in-out;
+}
+.progress-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.highlight-plan {
+  border: 2px solid #00c3ff;
+  box-shadow: 0 0 18px rgba(0, 195, 255, 0.3);
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+.plan-meta {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  margin-top: 6px;
+}
+.fade-in {
+  animation: fadeIn 0.7s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

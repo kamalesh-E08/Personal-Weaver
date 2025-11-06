@@ -11,6 +11,7 @@ const Chat = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const [latestPlan, setLatestPlan] = useState(null);
 
   const quickPrompts = [
     "Create a daily productivity plan for me",
@@ -27,90 +28,42 @@ const Chat = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Load chat sessions list
   useEffect(() => {
     const loadSessions = async () => {
       try {
         const { data: history } = await chatApi.getChatHistory();
         if (Array.isArray(history) && history.length > 0) {
           setSessions(history);
-          // Set the most recent session as current if no session is selected
-          setCurrentSessionId((prev) => {
-            if (!prev && history[0]) {
-              return history[0]._id;
-            }
-            return prev;
-          });
+          setCurrentSessionId((prev) =>
+            !prev && history[0] ? history[0]._id : prev
+          );
         }
       } catch (err) {
         console.error("Failed to load chat sessions:", err);
       }
     };
-
     if (user) loadSessions();
   }, [user]);
 
-  // Load messages for the current session
   useEffect(() => {
     if (!currentSessionId) {
       setMessages([]);
       return;
     }
 
-    // Find the current session from the sessions list
     const currentSession = sessions.find((s) => s._id === currentSessionId);
-
     if (currentSession && currentSession.messages) {
       const formatted = currentSession.messages.map((m, idx) => ({
         id: `${currentSessionId}-${idx}`,
         role: m.role,
-        content: m.content,
+        content:
+          typeof m.content === "string" && m.type === "plan"
+            ? JSON.parse(m.content)
+            : m.content,
         timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
         type: m.type || null,
       }));
       setMessages(formatted);
-    } else {
-      // If session not found in cached sessions, try to fetch it
-      const fetchSession = async () => {
-        try {
-          setIsLoading(true);
-          const { data: history } = await chatApi.getChatHistory();
-          if (Array.isArray(history) && history.length > 0) {
-            const foundSession = history.find(
-              (s) => s._id === currentSessionId
-            );
-            if (foundSession && foundSession.messages) {
-              const formatted = foundSession.messages.map((m, idx) => ({
-                id: `${currentSessionId}-${idx}`,
-                role: m.role,
-                content: m.content,
-                timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
-                type: m.type || null,
-              }));
-              setMessages(formatted);
-              // Update sessions list
-              setSessions((prev) => {
-                const exists = prev.find((s) => s._id === currentSessionId);
-                if (!exists && foundSession) {
-                  return [foundSession, ...prev];
-                }
-                return prev;
-              });
-            } else {
-              setMessages([]);
-            }
-          }
-        } catch (err) {
-          console.error("Failed to load session messages:", err);
-          setMessages([]);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      if (user) {
-        fetchSession();
-      }
     }
   }, [user, currentSessionId, sessions]);
 
@@ -131,28 +84,28 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      // Send message with current sessionId (or null for new session)
       const data = await chatApi.sendMessage(messageInput, currentSessionId);
 
-      // Backend returns: { sessionId, response, type, timestamp }
-      // Update current session if a new one was created
       if (data.sessionId && data.sessionId !== currentSessionId) {
         setCurrentSessionId(data.sessionId);
-        // Reload sessions list to include the new session
         const { data: history } = await chatApi.getChatHistory();
-        if (Array.isArray(history)) {
-          setSessions(history);
+        if (Array.isArray(history)) setSessions(history);
+      }
+
+      // 🧩 Parse plan responses directly
+      let parsedContent = data?.response;
+      if (data?.type === "plan" && typeof parsedContent === "string") {
+        try {
+          parsedContent = JSON.parse(parsedContent);
+        } catch (err) {
+          console.error("Failed to parse plan JSON:", err);
         }
       }
 
-      const responseText = data?.response || data?.message || "";
       const aiMessage = {
         id: Date.now() + 1,
         role: "assistant",
-        content:
-          typeof responseText === "string"
-            ? responseText
-            : JSON.stringify(responseText),
+        content: parsedContent,
         timestamp: data?.timestamp ? new Date(data.timestamp) : new Date(),
         type: data?.type || null,
       };
@@ -160,14 +113,16 @@ const Chat = () => {
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
-      const errorMessage = {
-        id: Date.now() + 1,
-        role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
-        timestamp: new Date(),
-        isError: true,
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          role: "assistant",
+          content: "Sorry, I encountered an error. Please try again.",
+          timestamp: new Date(),
+          isError: true,
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -185,75 +140,63 @@ const Chat = () => {
 
   const handleQuickPrompt = (prompt) => {
     setInput(prompt);
-    // Auto-submit the prompt
-    setTimeout(() => {
-      const event = { preventDefault: () => {} };
-      handleSubmit(event);
-    }, 100);
+    setTimeout(() => handleSubmit({ preventDefault: () => {} }), 100);
   };
 
-  // Helper to render message content (handles plan and error types)
   const renderMessageContent = (message) => {
-    // Detect trip plan JSON
-    const isTripPlanJSON = (str) => {
-      try {
-        const data = typeof str === "string" ? JSON.parse(str) : str;
-        return data?.title && Array.isArray(data?.schedule);
-      } catch {
-        return false;
-      }
-    };
+    const content = message.content;
 
-    // Render trip plan
-    const renderTripPlan = (data) => {
-      const plan = typeof data === "string" ? JSON.parse(data) : data;
-      return (
-        <div className="trip-plan">
-          <h3 className="trip-title">📅 {plan.title}</h3>
-          <ul className="trip-list">
-            {plan.schedule.map((item, index) => (
-              <li key={index} className="trip-item">
-                <div className="trip-time">🕒 {item.time}</div>
-                <div className="trip-activity">
-                  <strong>{item.activity}</strong>
-                </div>
-                <div className="trip-details">{item.details}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      );
-    };
-
-    // Handle plan / trip responses
-    if (isTripPlanJSON(message.content)) {
-      return renderTripPlan(message.content);
-    }
-    if (message.type === "plan") {
+    // 🧠 AI PLAN DETECTION
+    if (
+      (typeof content === "object" &&
+        content.title &&
+        Array.isArray(content.schedule)) ||
+      (typeof content === "string" && content.includes('"schedule"'))
+    ) {
       try {
         const plan =
-          typeof message.content === "string"
-            ? JSON.parse(message.content)
-            : message.content;
+          typeof content === "string" ? JSON.parse(content) : content;
         return (
           <div className="plan-message">
-            <h4>{plan.title || "Generated Plan"}</h4>
-            {Array.isArray(plan.tasks) ? (
-              <ul className="plan-tasks">
-                {plan.tasks.map((t, i) => (
-                  <li key={i}>{t.title || t}</li>
-                ))}
-              </ul>
-            ) : (
-              <pre style={{ whiteSpace: "pre-wrap" }}>
-                {JSON.stringify(plan, null, 2)}
-              </pre>
-            )}
+            <h3>📅 {plan.title}</h3>
+            <ul className="plan-schedule">
+              {plan.schedule.map((item, i) => (
+                <li key={i} className="plan-item">
+                  <div className="plan-time">🕒 {item.time}</div>
+                  <div className="plan-activity">
+                    <strong>{item.activity}</strong>
+                    {item.details && <p>{item.details}</p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         );
       } catch (err) {
-        console.error("Failed to parse plan message:", err);
-        return <span>{message.content}</span>;
+        console.error("Error rendering plan:", err);
+      }
+    }
+
+    // ✅ AI Task list
+    if (
+      (typeof content === "object" && Array.isArray(content.tasks)) ||
+      (typeof content === "string" && content.includes('"tasks"'))
+    ) {
+      try {
+        const taskData =
+          typeof content === "string" ? JSON.parse(content) : content;
+        return (
+          <div className="task-list-message">
+            <h4>✅ AI-Generated Tasks</h4>
+            <ul>
+              {taskData.tasks.map((task, i) => (
+                <li key={i}>🗒️ {task.title || task}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      } catch (err) {
+        console.error("Error rendering tasks:", err);
       }
     }
 
@@ -261,19 +204,23 @@ const Chat = () => {
       return (
         <div className="error-content">
           <span className="error-icon">⚠️</span>
-          <span>{message.content}</span>
+          <span>{content}</span>
         </div>
       );
     }
 
-    return <span>{message.content}</span>;
+    return (
+      <span>
+        {typeof content === "object" ? JSON.stringify(content) : content}
+      </span>
+    );
   };
 
   const currentSession = sessions.find((s) => s._id === currentSessionId);
 
   return (
     <div className="chat-container">
-      {/* Header */}
+      {/* === Header === */}
       <div className="chat-header">
         <div className="header-content">
           <h1 className="chat-title gradient-text">AI Planner</h1>
@@ -281,24 +228,14 @@ const Chat = () => {
             Your intelligent personal assistant powered by AI
           </p>
         </div>
+
         <div className="header-actions">
-          {/* Session Selector */}
           {sessions.length > 0 && (
             <div className="session-selector">
               <select
                 value={currentSessionId || ""}
                 onChange={(e) => handleSelectSession(e.target.value || null)}
                 className="session-select"
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  color: "#fff",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  marginRight: "12px",
-                }}
               >
                 <option value="">New Conversation</option>
                 {sessions.map((session) => (
@@ -310,27 +247,7 @@ const Chat = () => {
                   </option>
                 ))}
               </select>
-              <button
-                onClick={handleNewSession}
-                className="new-session-btn"
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  color: "#fff",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-                }}
-              >
+              <button onClick={handleNewSession} className="new-session-btn">
                 ➕ New
               </button>
             </div>
@@ -342,18 +259,8 @@ const Chat = () => {
         </div>
       </div>
 
-      {/* Current Session Info */}
       {currentSession && (
-        <div
-          className="session-info"
-          style={{
-            padding: "8px 16px",
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-            fontSize: "13px",
-            color: "rgba(255, 255, 255, 0.7)",
-          }}
-        >
+        <div className="session-info">
           <strong>{currentSession.sessionTitle || "Chat Session"}</strong> •{" "}
           {currentSession.messages?.length || 0} messages •{" "}
           {new Date(
@@ -362,15 +269,14 @@ const Chat = () => {
         </div>
       )}
 
-      {/* Chat Messages */}
       <div className="chat-messages">
         {messages.length === 0 ? (
           <div className="welcome-screen">
             <div className="welcome-icon">🧠</div>
             <h3 className="welcome-title">Welcome to Personal Weaver AI</h3>
             <p className="welcome-description">
-              I'm here to help you with planning, task management, productivity
-              tips, and more. How can I assist you today?
+              I'm here to help you with planning, task management, and
+              productivity.
             </p>
 
             <div className="quick-prompts">
@@ -439,7 +345,6 @@ const Chat = () => {
         )}
       </div>
 
-      {/* Chat Input */}
       <div className="chat-input-container">
         <form onSubmit={handleSubmit} className="chat-form">
           <input

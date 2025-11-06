@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./Tasks.css";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 
 const Tasks = () => {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("priority");
+  const [sortBy, setSortBy] = useState("duedate");
   const [loading, setLoading] = useState(false);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -108,11 +110,10 @@ const Tasks = () => {
   });
 
   const sortedTasks = [...filteredTasks].sort((a, b) => {
-    if (sortBy === "priority") {
-      const priorityOrder = { high: 3, medium: 2, low: 1 };
-      return priorityOrder[b.priority] - priorityOrder[a.priority];
-    } else if (sortBy === "dueDate") {
+    if (sortBy === "dueDate") {
       return new Date(a.dueDate) - new Date(b.dueDate);
+    } else if (sortBy === "category") {
+      return a.category.localeCompare(b.category);
     }
     return 0;
   });
@@ -185,7 +186,7 @@ const Tasks = () => {
   const completedCount = tasks.filter((task) => task.completed).length;
   const pendingCount = tasks.filter((task) => !task.completed).length;
   const aiGeneratedCount = tasks.filter((task) => task.aiGenerated).length;
-
+  const handleNavigation = (path) => navigate(path);
   return (
     <div className="tasks-container">
       {/* Header */}
@@ -199,7 +200,8 @@ const Tasks = () => {
         <div className="header-actions">
           <button
             className="btn btn-primary"
-            onClick={generateAITasks}
+            // onClick={generateAITasks}
+            onClick={() => handleNavigation("/chat")}
             disabled={loading}
           >
             <span className="btn-icon">✨</span>
@@ -209,20 +211,30 @@ const Tasks = () => {
       </div>
 
       {/* Unassigned Tasks Alert */}
-      {tasks.some((task) => !task.planId) && (
+      {tasks.some(
+        (task) =>
+          !task.planId ||
+          !plans.some((p) => String(p._id) === String(task.planId))
+      ) && (
         <div className="unassigned-tasks-alert card">
           <div className="unassigned-header">
             <h3 className="unassigned-title">
               <span className="meta-icon">📌</span> Unassigned Tasks
             </h3>
           </div>
+
           <p className="task-description">
-            You have tasks that aren't assigned to any plan. Consider organizing
-            them into your existing plans:
+            You have tasks that aren't assigned to any active plan. Consider
+            organizing them into your existing plans:
           </p>
+
           <div className="unassigned-tasks-list">
             {tasks
-              .filter((task) => !task.planId)
+              .filter(
+                (task) =>
+                  !task.planId ||
+                  !plans.some((p) => String(p._id) === String(task.planId))
+              )
               .map((task) => (
                 <div key={task._id} className="unassigned-task-item">
                   <span className="unassigned-task-title">{task.title}</span>
@@ -230,20 +242,17 @@ const Tasks = () => {
                     <select
                       className="form-control"
                       onChange={(e) => {
-                        if (e.target.value) {
+                        const selectedPlan = e.target.value;
+                        if (selectedPlan) {
                           api
-                            .put(`/tasks/${task._id}`, {
-                              planId: e.target.value,
-                            })
-                            .then(() => {
-                              fetchTasks();
-                            })
-                            .catch((error) => {
+                            .put(`/tasks/${task._id}`, { planId: selectedPlan })
+                            .then(() => fetchTasks())
+                            .catch((error) =>
                               console.error(
                                 "Error assigning task to plan:",
                                 error
-                              );
-                            });
+                              )
+                            );
                         }
                       }}
                       defaultValue=""
@@ -323,7 +332,6 @@ const Tasks = () => {
             onChange={(e) => setSortBy(e.target.value)}
             className="select"
           >
-            <option value="priority">Sort by Priority</option>
             <option value="dueDate">Sort by Due Date</option>
             <option value="category">Sort by Category</option>
           </select>
