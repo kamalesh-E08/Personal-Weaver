@@ -10,11 +10,8 @@ const Planner = () => {
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditPlanForm, setShowEditPlanForm] = useState(false);
-  const [showAddTaskForm, setShowAddTaskForm] = useState(false);
-  const [showEditTaskForm, setShowEditTaskForm] = useState(false);
 
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [selectedTask, setSelectedTask] = useState(null);
 
   const [planForm, setPlanForm] = useState({
     title: "",
@@ -22,16 +19,6 @@ const Planner = () => {
     goals: [""],
     timeline: "",
     priority: "medium",
-  });
-
-  const [taskForm, setTaskForm] = useState({
-    title: "",
-    description: "",
-    priority: "medium",
-    estimatedTime: "1 hour",
-    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
   });
 
   useEffect(() => {
@@ -43,6 +30,8 @@ const Planner = () => {
     try {
       const res = await api.get("/plans");
       const data = Array.isArray(res.data) ? res.data : res.data.plans || [];
+
+      // Attach tasks (if any)
       const withTasks = await Promise.all(
         data.map(async (plan) => {
           try {
@@ -53,6 +42,7 @@ const Planner = () => {
           }
         })
       );
+
       withTasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setPlans(withTasks);
     } catch (e) {
@@ -106,6 +96,7 @@ const Planner = () => {
         goals: planForm.goals,
         duration: planForm.timeline,
         priority: planForm.priority,
+        status: "active",
       };
 
       const res = await api.post("/plans", payload);
@@ -151,6 +142,19 @@ const Planner = () => {
     setPlans((prev) => prev.filter((p) => p._id !== id));
   };
 
+  // ✅ NEW: Toggle completion status
+  const handleToggleCompletion = async (plan) => {
+    try {
+      const newStatus = plan.status === "completed" ? "active" : "completed";
+      const res = await api.put(`/plans/${plan._id}`, { status: newStatus });
+
+      const updated = res.data || { ...plan, status: newStatus };
+      setPlans((prev) => prev.map((p) => (p._id === plan._id ? updated : p)));
+    } catch (err) {
+      console.error("Error toggling completion:", err);
+    }
+  };
+
   const renderPlanDescription = (desc) => {
     const parsed = safeParse(desc);
     if (parsed?.schedule?.length)
@@ -172,120 +176,6 @@ const Planner = () => {
 
   if (loading) return <div className="planner-container">Loading...</div>;
 
-  // --- Render Visual Editor for JSON Plans ---
-  const renderSmartEditor = () => {
-    let parsed = safeParse(planForm.description);
-    if (parsed && Array.isArray(parsed.schedule)) {
-      return (
-        <div className="form-group">
-          <label>Schedule Steps</label>
-          {parsed.schedule.map((item, i) => (
-            <div className="schedule-item" key={i}>
-              <input
-                type="text"
-                placeholder="Time"
-                value={item.time}
-                onChange={(e) => {
-                  const newSchedule = [...parsed.schedule];
-                  newSchedule[i].time = e.target.value;
-                  setPlanForm({
-                    ...planForm,
-                    description: JSON.stringify({
-                      ...parsed,
-                      schedule: newSchedule,
-                    }),
-                  });
-                }}
-              />
-              <input
-                type="text"
-                placeholder="Activity"
-                value={item.activity}
-                onChange={(e) => {
-                  const newSchedule = [...parsed.schedule];
-                  newSchedule[i].activity = e.target.value;
-                  setPlanForm({
-                    ...planForm,
-                    description: JSON.stringify({
-                      ...parsed,
-                      schedule: newSchedule,
-                    }),
-                  });
-                }}
-              />
-              <input
-                type="text"
-                placeholder="Details"
-                value={item.details}
-                onChange={(e) => {
-                  const newSchedule = [...parsed.schedule];
-                  newSchedule[i].details = e.target.value;
-                  setPlanForm({
-                    ...planForm,
-                    description: JSON.stringify({
-                      ...parsed,
-                      schedule: newSchedule,
-                    }),
-                  });
-                }}
-              />
-              <button
-                type="button"
-                className="remove-step"
-                onClick={() => {
-                  const newSchedule = parsed.schedule.filter(
-                    (_, idx) => idx !== i
-                  );
-                  setPlanForm({
-                    ...planForm,
-                    description: JSON.stringify({
-                      ...parsed,
-                      schedule: newSchedule,
-                    }),
-                  });
-                }}
-              >
-                🗑
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            className="add-step-btn"
-            onClick={() => {
-              const newSchedule = [
-                ...parsed.schedule,
-                { time: "", activity: "", details: "" },
-              ];
-              setPlanForm({
-                ...planForm,
-                description: JSON.stringify({
-                  ...parsed,
-                  schedule: newSchedule,
-                }),
-              });
-            }}
-          >
-            ➕ Add Step
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="form-group">
-        <label>Description</label>
-        <textarea
-          rows={6}
-          value={planForm.description}
-          onChange={(e) =>
-            setPlanForm({ ...planForm, description: e.target.value })
-          }
-        />
-      </div>
-    );
-  };
-
   return (
     <div className="planner-container">
       <div className="planner-header">
@@ -295,15 +185,38 @@ const Planner = () => {
 
       <div className="plans-grid">
         {plans.map((plan) => (
-          <div key={plan._id} className="plan-card">
+          <div
+            key={plan._id}
+            className={`plan-card ${
+              plan.status === "completed" ? "completed-plan" : ""
+            }`}
+          >
             <div className="plan-header">
               <h3>{plan.title}</h3>
-              <div>
+              <div className="plan-actions">
+                <button
+                  className={`status-btn ${
+                    plan.status === "completed" ? "completed" : "active"
+                  }`}
+                  onClick={() => handleToggleCompletion(plan)}
+                >
+                  {plan.status === "completed"
+                    ? "✅ Completed"
+                    : "☑️ Mark Done"}
+                </button>
                 <button onClick={() => handleEditPlan(plan)}>✏️</button>
                 <button onClick={() => handleDeletePlan(plan._id)}>🗑</button>
               </div>
             </div>
             {renderPlanDescription(plan.description)}
+            <div className="plan-footer">
+              <span className={`priority-${plan.priority}`}>
+                Priority: {plan.priority}
+              </span>
+              <span className="status-label">
+                {plan.status?.toUpperCase() || "ACTIVE"}
+              </span>
+            </div>
           </div>
         ))}
       </div>
@@ -325,7 +238,18 @@ const Planner = () => {
                   required
                 />
               </div>
-              {renderSmartEditor()}
+
+              <div className="form-group">
+                <label>Description</label>
+                <textarea
+                  rows={6}
+                  value={planForm.description}
+                  onChange={(e) =>
+                    setPlanForm({ ...planForm, description: e.target.value })
+                  }
+                />
+              </div>
+
               <div className="form-row">
                 <input
                   placeholder="Timeline"
@@ -345,6 +269,7 @@ const Planner = () => {
                   <option value="high">High</option>
                 </select>
               </div>
+
               <div className="form-actions">
                 <button type="submit">
                   {showEditPlanForm ? "Update" : "Create"}

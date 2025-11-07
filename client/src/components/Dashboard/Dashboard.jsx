@@ -14,28 +14,13 @@ const Dashboard = () => {
     pendingTasks: 0,
     totalPlans: 0,
     activePlans: 0,
-    totalChats: 0,
     completionRate: 0,
     productivityScore: 0,
   });
   const [recentTasks, setRecentTasks] = useState([]);
   const [activePlans, setActivePlans] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const parseTimeToDate = (timeStr) => {
-    try {
-      const now = new Date();
-      const today = now.toDateString();
-
-      if (timeStr.includes("-")) {
-        const [start] = timeStr.split("-");
-        return new Date(`${today} ${start.trim()}`);
-      }
-      return new Date(`${today} ${timeStr}`);
-    } catch {
-      return null;
-    }
-  };
+  const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
     if (user) fetchDashboardData();
@@ -44,44 +29,43 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const { data: userStats } = await api.get("/users/stats");
-      const { data: tasksData } = await api.get("/tasks?sortBy=createdAt:-1");
+      // Fetch all data together
+      const [{ data: userStats }, { data: tasksData }, { data: plansData }] =
+        await Promise.all([
+          api.get("/users/stats"),
+          api.get("/tasks?sortBy=createdAt:-1"),
+          api.get("/plans"),
+        ]);
+
       const allTasks = Array.isArray(tasksData) ? tasksData : [];
-
-      const totalTasks = allTasks.length;
-      const completedTasks = allTasks.filter((t) => t.completed).length;
-      const pendingTasks = totalTasks - completedTasks;
-
-      const { data: plansData } = await api.get("/plans");
       const allPlans = Array.isArray(plansData?.plans)
         ? plansData.plans
         : plansData;
 
-      const now = new Date();
-      const activePlansList = allPlans
-        .filter((plan) => plan.status === "active")
-        .map((plan) => {
-          let nextTime = Infinity;
-          try {
-            const parsed =
-              typeof plan.description === "string"
-                ? JSON.parse(plan.description)
-                : plan.description;
+      // Calculate task stats
+      const totalTasks = allTasks.length;
+      const completedTasks = allTasks.filter((t) => t.completed).length;
+      const pendingTasks = totalTasks - completedTasks;
 
-            if (parsed?.schedule?.length > 0) {
-              const times = parsed.schedule
-                .map((item) => parseTimeToDate(item.time))
-                .filter(Boolean)
-                .sort((a, b) => a - b);
-              if (times.length > 0) nextTime = times[0];
-            }
-          } catch {
-            nextTime = Infinity;
-          }
-          return { ...plan, nextTime };
-        })
-        .sort((a, b) => new Date(a.nextTime) - new Date(b.nextTime));
+      // Calculate dynamic progress for each plan
+      const plansWithProgress = allPlans.map((plan) => {
+        const planTasks = allTasks.filter(
+          (task) => task.planId && task.planId === plan._id
+        );
+        const completed = planTasks.filter((t) => t.completed).length;
+        const progress =
+          planTasks.length > 0
+            ? Math.round((completed / planTasks.length) * 100)
+            : 0;
+        return { ...plan, progress };
+      });
 
+      // Sort active plans (time-based, recent first)
+      const activePlansList = plansWithProgress
+        .filter((p) => p.status === "active")
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      // Productivity metrics
       const completionRate =
         totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
       const productivityScore = Math.min(
@@ -99,8 +83,10 @@ const Dashboard = () => {
         completionRate: Math.round(completionRate),
         productivityScore,
       });
+
+      setTasks(allTasks);
       setRecentTasks(allTasks.slice(0, 4));
-      setActivePlans(activePlansList.slice(0, 3));
+      setActivePlans(activePlansList.slice(0, 3)); // top 3 active plans
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -286,6 +272,8 @@ const Dashboard = () => {
                       : "—"}{" "}
                     • 🏷️ {plan.category || "General"}
                   </p>
+
+                  {/* ✅ Dynamic Progress Bar */}
                   <div className="progress-bar small">
                     <div
                       className="progress-fill"

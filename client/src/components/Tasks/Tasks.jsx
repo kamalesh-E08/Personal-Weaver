@@ -8,30 +8,33 @@ const Tasks = () => {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("duedate");
+  const [sortBy, setSortBy] = useState("dueDate");
   const [loading, setLoading] = useState(false);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
+  const [plans, setPlans] = useState([]);
+
   const [newTask, setNewTask] = useState({
     title: "",
     description: "",
     category: "Work",
     priority: "medium",
-    estimatedTime: "1 hour",
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split("T")[0],
     planId: "",
   });
-  const [plans, setPlans] = useState([]);
+
   const { user } = useAuth();
 
   const createTask = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // include planId only if user selected a plan
-      const payload = { ...newTask };
-      if (newTask.planId) payload.planId = newTask.planId;
+      const payload = {
+        ...newTask,
+        assignedDateTime: new Date().toISOString(),
+      };
+      if (!payload.planId) delete payload.planId;
 
       await api.post("/tasks", payload);
       await fetchTasks();
@@ -41,7 +44,6 @@ const Tasks = () => {
         description: "",
         category: "Work",
         priority: "medium",
-        estimatedTime: "1 hour",
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
           .toISOString()
           .split("T")[0],
@@ -58,16 +60,11 @@ const Tasks = () => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams();
-      if (filter !== "all") {
-        queryParams.append("filter", filter);
-      }
-      if (sortBy !== "none") {
-        queryParams.append("sortBy", sortBy);
-      }
+      if (filter !== "all") queryParams.append("filter", filter);
+      if (sortBy !== "none") queryParams.append("sortBy", sortBy);
 
       const response = await api.get(`/tasks?${queryParams.toString()}`);
       const data = response.data;
-      // If we have plans loaded, attach a planTitle to tasks for display
       const tasksWithPlanTitle = data.map((task) => {
         const plan = plans.find((p) => String(p._id) === String(task.planId));
         return { ...task, planTitle: plan ? plan.title : null };
@@ -81,12 +78,9 @@ const Tasks = () => {
   }, [filter, sortBy, plans]);
 
   useEffect(() => {
-    if (user) {
-      fetchTasks();
-    }
+    if (user) fetchTasks();
   }, [user, fetchTasks]);
 
-  // Fetch plans so users can assign tasks to them by name
   useEffect(() => {
     const fetchPlans = async () => {
       try {
@@ -102,6 +96,7 @@ const Tasks = () => {
     };
     if (user) fetchPlans();
   }, [user]);
+
   const filteredTasks = tasks.filter((task) => {
     if (filter === "completed") return task.completed;
     if (filter === "pending") return !task.completed;
@@ -155,16 +150,9 @@ const Tasks = () => {
       await api.put(`/tasks/${taskId}`, {
         completed: !taskToUpdate.completed,
       });
-      // If the update was successful, refetch tasks to ensure state is synchronized with backend
       fetchTasks();
     } catch (error) {
       console.error("Error toggling task completion:", error);
-      // Revert local state if API call fails
-      setTasks((prevTasks) =>
-        prevTasks.map((task) =>
-          task._id === taskId ? { ...task, completed: !task.completed } : task
-        )
-      );
     }
   };
 
@@ -172,10 +160,10 @@ const Tasks = () => {
     setLoading(true);
     try {
       await api.post("/tasks/generate", {
-        count: 3, // Generate 3 tasks at a time
+        count: 3,
         category: filter !== "all" ? filter : undefined,
       });
-      await fetchTasks(); // Refresh the task list to include both AI and manual tasks
+      await fetchTasks();
     } catch (error) {
       console.error("Error generating AI tasks:", error);
     } finally {
@@ -183,10 +171,17 @@ const Tasks = () => {
     }
   };
 
-  const completedCount = tasks.filter((task) => task.completed).length;
-  const pendingCount = tasks.filter((task) => !task.completed).length;
-  const aiGeneratedCount = tasks.filter((task) => task.aiGenerated).length;
+  const completedCount = tasks.filter((t) => t.completed).length;
+  const pendingCount = tasks.filter((t) => !t.completed).length;
+  const aiGeneratedCount = tasks.filter((t) => t.aiGenerated).length;
   const handleNavigation = (path) => navigate(path);
+
+  // 🔧 Unassigned tasks logic (fixed)
+  const unassignedTasks = tasks.filter(
+    (task) =>
+      !task.planId || !plans.find((p) => String(p._id) === String(task.planId))
+  );
+
   return (
     <div className="tasks-container">
       {/* Header */}
@@ -194,28 +189,23 @@ const Tasks = () => {
         <div className="header-content">
           <h1 className="tasks-title gradient-text">Task Management</h1>
           <p className="tasks-subtitle">
-            Organize and track your AI-generated tasks
+            Organize and track your tasks efficiently
           </p>
         </div>
         <div className="header-actions">
           <button
             className="btn btn-primary"
-            // onClick={generateAITasks}
             onClick={() => handleNavigation("/chat")}
             disabled={loading}
           >
             <span className="btn-icon">✨</span>
-            {loading ? "Generating..." : "Generate Tasks"}
+            Generate Tasks
           </button>
         </div>
       </div>
 
-      {/* Unassigned Tasks Alert */}
-      {tasks.some(
-        (task) =>
-          !task.planId ||
-          !plans.some((p) => String(p._id) === String(task.planId))
-      ) && (
+      {/* === Unassigned Tasks Alert === */}
+      {plans.length > 0 && unassignedTasks.length > 0 && (
         <div className="unassigned-tasks-alert card">
           <div className="unassigned-header">
             <h3 className="unassigned-title">
@@ -224,96 +214,62 @@ const Tasks = () => {
           </div>
 
           <p className="task-description">
-            You have tasks that aren't assigned to any active plan. Consider
-            organizing them into your existing plans:
+            These tasks aren’t linked to any plan. Assign them below:
           </p>
 
           <div className="unassigned-tasks-list">
-            {tasks
-              .filter(
-                (task) =>
-                  !task.planId ||
-                  !plans.some((p) => String(p._id) === String(task.planId))
-              )
-              .map((task) => (
-                <div key={task._id} className="unassigned-task-item">
-                  <span className="unassigned-task-title">{task.title}</span>
-                  <div className="task-assign-form">
-                    <select
-                      className="form-control"
-                      onChange={(e) => {
-                        const selectedPlan = e.target.value;
-                        if (selectedPlan) {
-                          api
-                            .put(`/tasks/${task._id}`, { planId: selectedPlan })
-                            .then(() => fetchTasks())
-                            .catch((error) =>
-                              console.error(
-                                "Error assigning task to plan:",
-                                error
-                              )
-                            );
-                        }
-                      }}
-                      defaultValue=""
-                    >
-                      <option value="">Assign to Plan</option>
-                      {plans.map((plan) => (
-                        <option key={plan._id} value={plan._id}>
-                          {plan.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+            {unassignedTasks.map((task) => (
+              <div key={task._id} className="unassigned-task-item">
+                <span className="unassigned-task-title">{task.title}</span>
+                <div className="task-assign-form">
+                  <select
+                    className="form-control"
+                    onChange={(e) => {
+                      const selectedPlan = e.target.value;
+                      if (selectedPlan) {
+                        api
+                          .put(`/tasks/${task._id}`, { planId: selectedPlan })
+                          .then(() => fetchTasks())
+                          .catch((err) =>
+                            console.error("Error assigning task:", err)
+                          );
+                      }
+                    }}
+                    defaultValue=""
+                  >
+                    <option value="">Assign to Plan</option>
+                    {plans.map((plan) => (
+                      <option key={plan._id} value={plan._id}>
+                        {plan.title}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Stats Cards */}
+      {/* === Stats Cards === */}
       <div className="stats-grid">
-        <div className="stat-card card">
-          <div className="stat-header">
-            <span className="stat-label">Total Tasks</span>
-            <span className="stat-icon">✅</span>
+        {[
+          { label: "Total Tasks", icon: "📋", value: tasks.length },
+          { label: "Completed", icon: "✅", value: completedCount },
+          { label: "Pending", icon: "⏳", value: pendingCount },
+          { label: "AI Generated", icon: "✨", value: aiGeneratedCount },
+        ].map((stat, i) => (
+          <div key={i} className="stat-card card">
+            <div className="stat-header">
+              <span className="stat-label">{stat.label}</span>
+              <span className="stat-icon">{stat.icon}</span>
+            </div>
+            <div className="stat-value">{stat.value}</div>
           </div>
-          <div className="stat-value">{tasks.length}</div>
-          <div className="stat-change">All tasks</div>
-        </div>
-
-        <div className="stat-card card">
-          <div className="stat-header">
-            <span className="stat-label">Completed</span>
-            <span className="stat-icon">✅</span>
-          </div>
-          <div className="stat-value">{completedCount}</div>
-          <div className="stat-change">
-            {Math.round((completedCount / Math.max(tasks.length, 1)) * 100)}%
-            completion rate
-          </div>
-        </div>
-
-        <div className="stat-card card">
-          <div className="stat-header">
-            <span className="stat-label">Pending</span>
-            <span className="stat-icon">⏳</span>
-          </div>
-          <div className="stat-value">{pendingCount}</div>
-          <div className="stat-change">Remaining tasks</div>
-        </div>
-
-        <div className="stat-card card">
-          <div className="stat-header">
-            <span className="stat-label">AI Generated</span>
-            <span className="stat-icon">✨</span>
-          </div>
-          <div className="stat-value">{aiGeneratedCount}</div>
-          <div className="stat-change">Smart suggestions</div>
-        </div>
+        ))}
       </div>
 
-      {/* Filters and Controls */}
+      {/* === Controls === */}
       <div className="controls-section">
         <div className="filters">
           <select
@@ -341,12 +297,11 @@ const Tasks = () => {
           className="btn btn-outline"
           onClick={() => setShowAddTaskForm(true)}
         >
-          <span className="btn-icon">+</span>
-          Add Manual Task
+          <span className="btn-icon">+</span> Add Manual Task
         </button>
       </div>
 
-      {/* Add Task Form */}
+      {/* === Add Task Form === */}
       {showAddTaskForm && (
         <div className="add-task-form card">
           <form onSubmit={createTask}>
@@ -373,6 +328,7 @@ const Tasks = () => {
                 className="form-control"
               />
             </div>
+
             <div className="form-row">
               <div className="form-group">
                 <label>Category</label>
@@ -422,6 +378,7 @@ const Tasks = () => {
                 </select>
               </div>
             </div>
+
             <div className="form-row">
               <div className="form-group">
                 <label>Due Date</label>
@@ -434,19 +391,8 @@ const Tasks = () => {
                   className="form-control"
                 />
               </div>
-              <div className="form-group">
-                <label>Estimated Time</label>
-                <input
-                  type="text"
-                  value={newTask.estimatedTime}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, estimatedTime: e.target.value })
-                  }
-                  placeholder="e.g. 1 hour"
-                  className="form-control"
-                />
-              </div>
             </div>
+
             <div className="form-actions">
               <button
                 type="button"
@@ -467,7 +413,7 @@ const Tasks = () => {
         </div>
       )}
 
-      {/* Tasks List */}
+      {/* === Tasks List === */}
       <div className="tasks-list">
         {sortedTasks.map((task) => (
           <div key={task._id} className="task-card card">
@@ -500,8 +446,13 @@ const Tasks = () => {
                       </span>
                     </div>
                     <div className="meta-item">
-                      <span className="meta-icon">⏱️</span>
-                      <span>Est: {task.estimatedTime}</span>
+                      <span className="meta-icon">🕒</span>
+                      <span>
+                        Assigned:{" "}
+                        {new Date(
+                          task.assignedDateTime || task.createdAt
+                        ).toLocaleString()}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -509,21 +460,15 @@ const Tasks = () => {
 
               <div className="task-badges">
                 {task.aiGenerated && (
-                  <span className="badge badge-info">
-                    <span className="badge-icon">✨</span>
-                    AI
-                  </span>
+                  <span className="badge badge-info">✨ AI</span>
                 )}
                 <span className={`badge ${getPriorityColor(task.priority)}`}>
-                  <span className="badge-icon">
-                    {getPriorityIcon(task.priority)}
-                  </span>
-                  {task.priority}
+                  {getPriorityIcon(task.priority)} {task.priority}
                 </span>
                 <span className="badge badge-primary">{task.category}</span>
                 {task.planTitle && (
                   <span className="badge badge-plain plan-badge">
-                    {task.planTitle}
+                    📘 {task.planTitle}
                   </span>
                 )}
               </div>
@@ -538,17 +483,9 @@ const Tasks = () => {
           <h3 className="empty-title">No tasks found</h3>
           <p className="empty-description">
             {filter === "all"
-              ? "You don't have any tasks yet. Let AI generate some for you!"
-              : `No tasks match the current filter: ${filter}`}
+              ? "You don't have any tasks yet."
+              : `No tasks match filter: ${filter}`}
           </p>
-          <button
-            className="btn btn-primary"
-            onClick={generateAITasks}
-            disabled={loading}
-          >
-            <span className="btn-icon">✨</span>
-            {loading ? "Generating..." : "Generate AI Tasks"}
-          </button>
         </div>
       )}
 
