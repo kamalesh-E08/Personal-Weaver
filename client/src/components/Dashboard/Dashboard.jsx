@@ -274,7 +274,7 @@ const Dashboard = () => {
             </div>
           ) : (
             recentTasks.map((task) => (
-              <div key={task._id} className="task-item">
+              <div key={task._id} className="task-item" style={{ background: task.completed ? "rgba(255, 255, 255, 0.08)" : "transparent" }}>
                 <div className="task-checkbox">
                   <input type="checkbox" checked={task.completed} readOnly />
                 </div>
