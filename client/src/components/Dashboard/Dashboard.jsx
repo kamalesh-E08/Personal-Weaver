@@ -44,10 +44,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      // === Fetch stats ===
       const { data: userStats } = await api.get("/users/stats");
-
-      // === Fetch all tasks ===
       const { data: tasksData } = await api.get("/tasks?sortBy=createdAt:-1");
       const allTasks = Array.isArray(tasksData) ? tasksData : [];
 
@@ -55,13 +52,11 @@ const Dashboard = () => {
       const completedTasks = allTasks.filter((t) => t.completed).length;
       const pendingTasks = totalTasks - completedTasks;
 
-      // === Fetch plans ===
       const { data: plansData } = await api.get("/plans");
       const allPlans = Array.isArray(plansData?.plans)
         ? plansData.plans
         : plansData;
 
-      // === Detect time-based active plans ===
       const now = new Date();
       const activePlansList = allPlans
         .filter((plan) => plan.status === "active")
@@ -87,9 +82,6 @@ const Dashboard = () => {
         })
         .sort((a, b) => new Date(a.nextTime) - new Date(b.nextTime));
 
-      const latestPlan = activePlansList[0];
-
-      // === Productivity ===
       const completionRate =
         totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
       const productivityScore = Math.min(
@@ -108,7 +100,7 @@ const Dashboard = () => {
         productivityScore,
       });
       setRecentTasks(allTasks.slice(0, 4));
-      setActivePlans(activePlansList.slice(0, 3)); // top 3 active
+      setActivePlans(activePlansList.slice(0, 3));
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -193,45 +185,107 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* ACTIVE PLANS */}
-      <div className="dashboard-section card">
-        <div className="section-header">
-          <h3 className="section-title">Active Plans</h3>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => handleNavigation("/planner")}
-          >
-            View All →
-          </button>
-        </div>
-        <div className="plans-list">
-          {activePlans.length === 0 ? (
-            <div className="empty-state">
-              <p>No active plans</p>
-              <small>Create your first plan to get started!</small>
-            </div>
-          ) : (
-            activePlans.map((plan, i) => (
-              <div
-                key={plan._id}
-                className={`plan-item ${i === 0 ? "highlight-plan" : ""}`}
-              >
-                <div className="plan-header">
-                  <h4 className="plan-title">
-                    {i === 0 ? "🔥 Next Up: " : ""}
-                    {plan.title}
-                  </h4>
-                  <span
-                    className={`badge ${
-                      plan.status === "completed"
-                        ? "badge-success"
-                        : "badge-primary"
-                    }`}
-                  >
-                    {plan.status}
-                  </span>
+      {/* CONTENT GRID */}
+      <div className="dashboard-content-grid">
+        {/* LEFT: RECENT TASKS */}
+        <div className="dashboard-section card tasks-side">
+          <div className="section-header">
+            <h3 className="section-title">Recent Tasks</h3>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => handleNavigation("/tasks")}
+            >
+              View All →
+            </button>
+          </div>
+          <div className="tasks-list">
+            {recentTasks.length === 0 ? (
+              <div className="empty-state">
+                <p>No tasks found</p>
+              </div>
+            ) : (
+              recentTasks.map((task) => (
+                <div
+                  key={task._id}
+                  className="task-item"
+                  style={{
+                    background: task.completed
+                      ? "rgba(255, 255, 255, 0.08)"
+                      : "transparent",
+                  }}
+                >
+                  <div className="task-checkbox">
+                    <input type="checkbox" checked={task.completed} readOnly />
+                  </div>
+                  <div className="task-content">
+                    <h4
+                      className={`task-title ${
+                        task.completed ? "completed" : ""
+                      }`}
+                    >
+                      {task.title}
+                    </h4>
+                  </div>
+                  <div className="task-badges">
+                    <span
+                      className={`badge ${getPriorityBadgeClass(
+                        task.priority
+                      )}`}
+                    >
+                      {task.priority}
+                    </span>
+                  </div>
                 </div>
-                <div className="plan-progress">
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT: ACTIVE PLANS */}
+        <div className="dashboard-section card plans-side">
+          <div className="section-header">
+            <h3 className="section-title">Active Plans</h3>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => handleNavigation("/planner")}
+            >
+              View All →
+            </button>
+          </div>
+          <div className="plans-list">
+            {activePlans.length === 0 ? (
+              <div className="empty-state">
+                <p>No active plans</p>
+                <small>Create your first plan to get started!</small>
+              </div>
+            ) : (
+              activePlans.map((plan, i) => (
+                <div
+                  key={plan._id}
+                  className={`plan-item ${i === 0 ? "highlight-plan" : ""}`}
+                >
+                  <div className="plan-header">
+                    <h4 className="plan-title">
+                      {i === 0 ? "🔥 Next Up: " : ""}
+                      {plan.title}
+                    </h4>
+                    <span
+                      className={`badge ${
+                        plan.status === "completed"
+                          ? "badge-success"
+                          : "badge-primary"
+                      }`}
+                    >
+                      {plan.status}
+                    </span>
+                  </div>
+                  <p className="plan-meta">
+                    📅 Due:{" "}
+                    {plan.dueDate
+                      ? new Date(plan.dueDate).toLocaleDateString()
+                      : "—"}{" "}
+                    • 🏷️ {plan.category || "General"}
+                  </p>
                   <div className="progress-bar small">
                     <div
                       className="progress-fill"
@@ -242,62 +296,9 @@ const Dashboard = () => {
                     {plan.progress || 0}% complete
                   </span>
                 </div>
-                <p className="plan-meta">
-                  📅 Due:{" "}
-                  {plan.dueDate
-                    ? new Date(plan.dueDate).toLocaleDateString()
-                    : "—"}
-                  {"  •  "}
-                  🏷️ {plan.category || "General"}
-                </p>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* RECENT TASKS */}
-      <div className="dashboard-section card">
-        <div className="section-header">
-          <h3 className="section-title">Recent Tasks</h3>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => handleNavigation("/tasks")}
-          >
-            View All →
-          </button>
-        </div>
-        <div className="tasks-list">
-          {recentTasks.length === 0 ? (
-            <div className="empty-state">
-              <p>No tasks found</p>
-            </div>
-          ) : (
-            recentTasks.map((task) => (
-              <div key={task._id} className="task-item" style={{ background: task.completed ? "rgba(255, 255, 255, 0.08)" : "transparent" }}>
-                <div className="task-checkbox">
-                  <input type="checkbox" checked={task.completed} readOnly />
-                </div>
-                <div className="task-content">
-                  <h4
-                    className={`task-title ${
-                      task.completed ? "completed" : ""
-                    }`}
-                  >
-                    {task.title}
-                  </h4>
-                  <p className="task-description">{task.description}</p>
-                </div>
-                <div className="task-badges">
-                  <span
-                    className={`badge ${getPriorityBadgeClass(task.priority)}`}
-                  >
-                    {task.priority}
-                  </span>
-                </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>
