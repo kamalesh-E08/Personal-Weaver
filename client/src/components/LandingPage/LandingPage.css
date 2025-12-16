@@ -241,20 +241,20 @@
   .landing-content {
     flex-direction: column;
   }
-  
+
   .auth-section {
     width: 100%;
     padding: 32px 24px;
   }
-  
+
   .hero-section {
     padding: 32px 24px;
   }
-  
+
   .hero-title {
     font-size: 48px;
   }
-  
+
   .features-grid {
     grid-template-columns: 1fr;
   }
@@ -264,19 +264,19 @@
   .nav-container {
     padding: 0 16px;
   }
-  
+
   .nav-links {
     gap: 16px;
   }
-  
+
   .hero-title {
     font-size: 36px;
   }
-  
+
   .hero-description {
     font-size: 18px;
   }
-  
+
   .auth-section {
     padding: 24px 16px;
   }
